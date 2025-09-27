@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>WordPad</title>
+    <title>WordPad - Step 7</title>
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -11,12 +11,45 @@
     <!-- Tabs -->
     <div class="tabs">
         <button class="tab-btn" data-tab="file">File</button>
-        <button class="tab-btn active" data-tab="format">Format</button>
+        <button class="tab-btn active" data-tab="home">Home</button>
         <button class="tab-btn" data-tab="insert">Insert</button>
         <button class="tab-btn" data-tab="docops">Document Ops</button>
         <button class="tab-btn" data-tab="export">Export</button>
     </div>
 
+    <!-- Toolbars -->
+    <div class="toolbar" id="home" style="display:flex;">
+        <!-- Formatting (from step1 + step2) -->
+        <select onchange="editor.execCmd('fontName', this.value)">
+            <option value="Calibri">Calibri</option>
+            <option value="Arial">Arial</option>
+            <option value="Times New Roman">Times New Roman</option>
+        </select>
+        <select onchange="editor.execCmd('fontSize', this.value)">
+            <option value="3">12</option>
+            <option value="4">14</option>
+            <option value="5">18</option>
+            <option value="6">24</option>
+            <option value="7">36</option>
+        </select>
+        <select onchange="editor.formatBlock(this.value)">
+            <option value="P">Normal</option>
+            <option value="H1">Heading 1</option>
+            <option value="H2">Heading 2</option>
+        </select>
+        <button onclick="editor.execCmd('bold')"><b>B</b></button>
+        <button onclick="editor.execCmd('italic')"><i>I</i></button>
+        <button onclick="editor.execCmd('underline')"><u>U</u></button>
+        <input type="color" onchange="editor.execCmd('foreColor', this.value)">
+        <input type="color" onchange="editor.execCmd('hiliteColor', this.value)">
+        <button onclick="editor.execCmd('justifyLeft')">Left</button>
+        <button onclick="editor.execCmd('justifyCenter')">Center</button>
+        <button onclick="editor.execCmd('justifyRight')">Right</button>
+        <button onclick="editor.execCmd('insertUnorderedList')">• Bulleted</button>
+        <button onclick="editor.execCmd('insertOrderedList')">1. Numbered</button>
+        <button onclick="editor.execCmd('outdent')">Outdent</button>
+        <button onclick="editor.execCmd('indent')">Indent</button>
+    </div>
     <div class="toolbar" id="file">
         <button onclick="fileManager.newDoc()">New</button>
         <input type="file" id="openFile" style="display:none" onchange="fileManager.openDoc(event)">
@@ -25,52 +58,14 @@
         <button onclick="fileManager.toggleAutoSave()">Toggle AutoSave</button>
         <span id="autosaveStatus">AutoSave: OFF</span>
     </div>
-    <!-- Toolbar: Format -->
-    <div class="toolbar" id="format" style="display:flex;">
-        <select onchange="editor.execCmd('fontName', this.value)">
-            <option value="Calibri">Calibri</option>
-            <option value="Arial">Arial</option>
-            <option value="Times New Roman">Times New Roman</option>
-        </select>
 
-        <select onchange="editor.execCmd('fontSize', this.value)">
-            <option value="3">12</option>
-            <option value="4">14</option>
-            <option value="5">18</option>
-            <option value="6">24</option>
-            <option value="7">36</option>
-        </select>
-
-        <select onchange="editor.formatBlock(this.value)">
-            <option value="P">Normal</option>
-            <option value="H1">Heading 1</option>
-            <option value="H2">Heading 2</option>
-        </select>
-
-        <button onclick="editor.execCmd('bold')"><b>B</b></button>
-        <button onclick="editor.execCmd('italic')"><i>I</i></button>
-        <button onclick="editor.execCmd('underline')"><u>U</u></button>
-
-        <input type="color" onchange="editor.execCmd('foreColor', this.value)">
-        <input type="color" onchange="editor.execCmd('hiliteColor', this.value)">
-
-        <button onclick="editor.execCmd('justifyLeft')">Left</button>
-        <button onclick="editor.execCmd('justifyCenter')">Center</button>
-        <button onclick="editor.execCmd('justifyRight')">Right</button>
-
-        <button onclick="editor.execCmd('insertUnorderedList')">• Bulleted</button>
-        <button onclick="editor.execCmd('insertOrderedList')">1. Numbered</button>
-        <button onclick="editor.execCmd('outdent')">Outdent</button>
-        <button onclick="editor.execCmd('indent')">Indent</button>
-
-    </div>
-    <!-- Insert toolbar -->
     <div class="toolbar" id="insert">
         <button onclick="inserter.insertLink()">Insert Link</button>
         <button onclick="inserter.insertImage()">Insert Image (File)</button>
         <button onclick="inserter.insertImageURL()">Insert Image (URL)</button>
         <button onclick="inserter.insertTable()">Insert Table</button>
     </div>
+
     <div class="toolbar" id="docops">
         <button onclick="viewer.clearFormatting()">Clear Formatting</button>
         <button onclick="viewer.resetContent()">Reset Document</button>
@@ -78,14 +73,23 @@
         <button onclick="viewer.copyHTML()">Copy HTML</button>
         <button onclick="viewer.previewDoc()">Preview</button>
     </div>
+
     <div class="toolbar" id="export">
         <input id="docTitle" placeholder="Title">
         <input id="docAuthor" placeholder="Author">
         <button onclick="exporter.exportWord()">Export .doc</button>
         <button onclick="exporter.exportPDF()">Export PDF</button>
     </div>
-    <!-- Editor -->
-    <div id="editor" contenteditable="true"></div>
+
+
+
+    <!-- Editor (A4 page) -->
+    <div class="page">
+        <div id="editor" contenteditable="true">
+            <p>Step 7: MS Word vibe applied (A4 page + cursor focus).</p>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
 

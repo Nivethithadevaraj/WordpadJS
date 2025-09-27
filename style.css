@@ -2,7 +2,8 @@ body {
     font-family: Calibri, Arial, sans-serif;
     margin: 0;
     padding: 16px;
-    background: #f5f6f7;
+    background: #e5e5e5;
+    /* Grey background like Word */
 }
 
 .tabs {
@@ -33,22 +34,21 @@ body {
     flex-wrap: wrap;
 }
 
+.page {
+    display: flex;
+    justify-content: center;
+    padding: 20px 0;
+}
+
 #editor {
-    min-height: 420px;
-    padding: 18px;
-    margin-top: 12px;
+    width: 794px;
+    /* A4 width */
+    min-height: 1123px;
+    /* A4 height */
+    background: white;
     border: 1px solid #ccc;
-    background: #fff;
-    border-radius: 6px;
-}
-
-button {
-    padding: 6px 8px;
-}
-
-select,
-input[type=color] {
-    padding: 6px;
+    padding: 40px;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
 }
 
 #editor img,
@@ -68,4 +68,14 @@ input[type=color] {
     border: 1px solid #333;
     padding: 6px;
     min-width: 40px;
+}
+
+button {
+    padding: 6px 8px;
+}
+
+select,
+input[type=color],
+input[type=text] {
+    padding: 6px;
 }
