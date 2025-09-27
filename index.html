@@ -13,6 +13,7 @@
         <button class="tab-btn active" data-tab="format">Format</button>
         <button class="tab-btn" data-tab="insert">Insert</button>
         <button class="tab-btn" data-tab="docops">Document Ops</button>
+        <button class="tab-btn" data-tab="export">Export</button>
     </div>
     <!-- Toolbar: Format -->
     <div class="toolbar" id="format" style="display:flex;">
@@ -66,6 +67,12 @@
         <button onclick="viewer.copyPlain()">Copy Plain Text</button>
         <button onclick="viewer.copyHTML()">Copy HTML</button>
         <button onclick="viewer.previewDoc()">Preview</button>
+    </div>
+    <div class="toolbar" id="export">
+        <input id="docTitle" placeholder="Title">
+        <input id="docAuthor" placeholder="Author">
+        <button onclick="exporter.exportWord()">Export .doc</button>
+        <button onclick="exporter.exportPDF()">Export PDF</button>
     </div>
     <!-- Editor -->
     <div id="editor" contenteditable="true"></div>

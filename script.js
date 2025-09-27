@@ -78,15 +78,34 @@ class Inserter {
 }
 const inserter = new Inserter("editor");
 class Viewer {
-  constructor(editorId) { this.editor = document.getElementById(editorId); }
-  clearFormatting() { document.execCommand("removeFormat", false, null); }
-  resetContent() { if (confirm("Reset?")) this.editor.innerHTML = ""; }
-  copyPlain() { navigator.clipboard.writeText(this.editor.innerText); }
-  copyHTML() { navigator.clipboard.writeText(this.editor.innerHTML); }
-  previewDoc() {
-    const w = window.open("", "_blank");
-    w.document.write(this.editor.innerHTML);
-    w.document.close();
-  }
+    constructor(editorId) { this.editor = document.getElementById(editorId); }
+    clearFormatting() { document.execCommand("removeFormat", false, null); }
+    resetContent() { if (confirm("Reset?")) this.editor.innerHTML = ""; }
+    copyPlain() { navigator.clipboard.writeText(this.editor.innerText); }
+    copyHTML() { navigator.clipboard.writeText(this.editor.innerHTML); }
+    previewDoc() {
+        const w = window.open("", "_blank");
+        w.document.write(this.editor.innerHTML);
+        w.document.close();
+    }
 }
 const viewer = new Viewer("editor");
+
+class Exporter {
+    constructor(editorId) { this.editor = document.getElementById(editorId); }
+    exportWord() {
+        const title = document.getElementById("docTitle").value || "Untitled";
+        const author = document.getElementById("docAuthor").value || "Unknown";
+        const content = `<h1>${title}</h1><p>${author}</p>` + this.editor.innerHTML;
+        const blob = new Blob([content], { type: "application/msword" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob); a.download = title + ".doc"; a.click();
+    }
+    exportPDF() {
+        const w = window.open("", "_blank");
+        w.document.write(this.editor.innerHTML);
+        w.print();
+    }
+}
+const exporter = new Exporter("editor");
+
