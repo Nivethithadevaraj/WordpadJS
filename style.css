@@ -6,6 +6,26 @@ body {
     /* Grey background like Word */
 }
 
+select option[value="Calibri"] {
+    font-family: Calibri, sans-serif;
+}
+
+select option[value="Arial"] {
+    font-family: Arial, sans-serif;
+}
+
+select option[value="Times New Roman"] {
+    font-family: "Times New Roman", serif;
+}
+
+select option[value="Georgia"] {
+    font-family: Georgia, serif;
+}
+
+select option[value="Verdana"] {
+    font-family: Verdana, sans-serif;
+}
+
 .tabs {
     display: flex;
     gap: 10px;
