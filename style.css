@@ -1,0 +1,52 @@
+body {
+    font-family: Calibri, Arial, sans-serif;
+    margin: 0;
+    padding: 16px;
+    background: #f5f6f7;
+}
+
+.tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.tab-btn {
+    padding: 6px 12px;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    background: #eee;
+}
+
+.tab-btn.active {
+    background: #ddd;
+    font-weight: bold;
+}
+
+.toolbar {
+    display: none;
+    gap: 8px;
+    padding: 8px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    flex-wrap: wrap;
+}
+
+#editor {
+    min-height: 420px;
+    padding: 18px;
+    margin-top: 12px;
+    border: 1px solid #ccc;
+    background: #fff;
+    border-radius: 6px;
+}
+
+button {
+    padding: 6px 8px;
+}
+
+select,
+input[type=color] {
+    padding: 6px;
+}
