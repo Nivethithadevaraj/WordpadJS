@@ -50,3 +50,22 @@ select,
 input[type=color] {
     padding: 6px;
 }
+
+#editor img,
+#editor table {
+    resize: both;
+    overflow: auto;
+    display: inline-block;
+    cursor: move;
+    max-width: 100%;
+}
+
+#editor table {
+    border-collapse: collapse;
+}
+
+#editor td {
+    border: 1px solid #333;
+    padding: 6px;
+    min-width: 40px;
+}

@@ -11,6 +11,7 @@
     <!-- Tabs -->
     <div class="tabs">
         <button class="tab-btn active" data-tab="format">Format</button>
+        <button class="tab-btn" data-tab="insert">Insert</button>
     </div>
     <!-- Toolbar: Format -->
     <div class="toolbar" id="format" style="display:flex;">
@@ -44,12 +45,19 @@
         <button onclick="editor.execCmd('justifyLeft')">Left</button>
         <button onclick="editor.execCmd('justifyCenter')">Center</button>
         <button onclick="editor.execCmd('justifyRight')">Right</button>
-        
+
         <button onclick="editor.execCmd('insertUnorderedList')">• Bulleted</button>
         <button onclick="editor.execCmd('insertOrderedList')">1. Numbered</button>
         <button onclick="editor.execCmd('outdent')">Outdent</button>
         <button onclick="editor.execCmd('indent')">Indent</button>
 
+    </div>
+    <!-- Insert toolbar -->
+    <div class="toolbar" id="insert">
+        <button onclick="inserter.insertLink()">Insert Link</button>
+        <button onclick="inserter.insertImage()">Insert Image (File)</button>
+        <button onclick="inserter.insertImageURL()">Insert Image (URL)</button>
+        <button onclick="inserter.insertTable()">Insert Table</button>
     </div>
     <!-- Editor -->
     <div id="editor" contenteditable="true"></div>
