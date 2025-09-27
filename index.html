@@ -10,10 +10,20 @@
 <body>
     <!-- Tabs -->
     <div class="tabs">
+        <button class="tab-btn" data-tab="file">File</button>
         <button class="tab-btn active" data-tab="format">Format</button>
         <button class="tab-btn" data-tab="insert">Insert</button>
         <button class="tab-btn" data-tab="docops">Document Ops</button>
         <button class="tab-btn" data-tab="export">Export</button>
+    </div>
+
+    <div class="toolbar" id="file">
+        <button onclick="fileManager.newDoc()">New</button>
+        <input type="file" id="openFile" style="display:none" onchange="fileManager.openDoc(event)">
+        <button onclick="document.getElementById('openFile').click()">Open</button>
+        <button onclick="fileManager.saveToFile()">Save</button>
+        <button onclick="fileManager.toggleAutoSave()">Toggle AutoSave</button>
+        <span id="autosaveStatus">AutoSave: OFF</span>
     </div>
     <!-- Toolbar: Format -->
     <div class="toolbar" id="format" style="display:flex;">

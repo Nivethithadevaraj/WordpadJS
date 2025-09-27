@@ -109,3 +109,31 @@ class Exporter {
 }
 const exporter = new Exporter("editor");
 
+class FileManager {
+    constructor(editorId) {
+        this.editor = document.getElementById(editorId);
+        this.autoSave = false;
+        this.restore();
+    }
+    newDoc() { if (confirm("Clear?")) this.editor.innerHTML = ""; }
+    openDoc(e) {
+        const f = e.target.files[0]; if (!f) return;
+        const r = new FileReader();
+        r.onload = ev => { this.editor.innerHTML = ev.target.result; };
+        r.readAsText(f);
+    }
+    saveToFile() {
+        const blob = new Blob([this.editor.innerHTML], { type: "text/html" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob); a.download = "document.html"; a.click();
+    }
+    toggleAutoSave() {
+        this.autoSave = !this.autoSave;
+        document.getElementById("autosaveStatus").innerText = "AutoSave: " + (this.autoSave ? "ON" : "OFF");
+        if (this.autoSave) this.timer = setInterval(() => this.save(), 4000);
+        else clearInterval(this.timer);
+    }
+    save() { localStorage.setItem("autosave", this.editor.innerHTML); }
+    restore() { const saved = localStorage.getItem("autosave"); if (saved) this.editor.innerHTML = saved; }
+}
+const fileManager = new FileManager("editor");
