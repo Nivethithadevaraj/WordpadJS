@@ -79,3 +79,27 @@ input[type=color],
 input[type=text] {
     padding: 6px;
 }
+
+/* --- Preview Styles --- */
+.preview-body {
+    margin: 0;
+    background: #e5e5e5;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.preview-page {
+    width: 794px;
+    min-height: 1123px;
+    background: white;
+    padding: 40px;
+    border: 1px solid #ccc;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+}
+
+.preview-page h1.title {
+    text-align: center;
+    font-size: 20px;
+    margin-bottom: 20px;
+}

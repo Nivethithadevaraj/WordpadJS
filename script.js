@@ -33,12 +33,48 @@ class Inserter {
 }
 
 class Viewer {
-    constructor(editorId) { this.editor = document.getElementById(editorId); }
-    clearFormatting() { document.execCommand("removeFormat", false, null); }
-    resetContent() { if (confirm("Reset?")) this.editor.innerHTML = ""; }
-    copyPlain() { navigator.clipboard.writeText(this.editor.innerText); }
-    copyHTML() { navigator.clipboard.writeText(this.editor.innerHTML); }
-    previewDoc() { const w = window.open("", "_blank"); w.document.write(this.editor.innerHTML); w.document.close(); }
+    constructor(editorId) {
+        this.editor = document.getElementById(editorId);
+    }
+
+    clearFormatting() {
+        document.execCommand("removeFormat", false, null);
+    }
+
+    resetContent() {
+        if (confirm("Reset?")) this.editor.innerHTML = "";
+    }
+
+    copyPlain() {
+        navigator.clipboard.writeText(this.editor.innerText);
+    }
+
+    copyHTML() {
+        navigator.clipboard.writeText(this.editor.innerHTML);
+    }
+
+    previewDoc() {
+        const title = document.getElementById("docTitle")?.value || "";
+        const content = this.editor.innerHTML;
+
+        const previewWin = window.open("", "_blank", "width=900,height=700");
+        previewWin.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>${title}</title>
+        <link rel="stylesheet" href="style.css">
+      </head>
+      <body class="preview-body">
+        <div class="page preview-page">
+          <h1 class="title">${title}</h1>
+          ${content}
+        </div>
+      </body>
+      </html>
+    `);
+        previewWin.document.close();
+    }
 }
 
 class Exporter {
@@ -92,3 +128,4 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
         document.getElementById(btn.dataset.tab).style.display = "flex";
     });
 });
+// localStorage.removeItem("autosave");

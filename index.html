@@ -19,7 +19,7 @@
 
     <!-- Toolbars -->
     <div class="toolbar" id="home" style="display:flex;">
-        <!-- Formatting (from step1 + step2) -->
+        <!-- Formatting-->
         <select onchange="editor.execCmd('fontName', this.value)">
             <option value="Calibri">Calibri</option>
             <option value="Arial">Arial</option>
@@ -81,12 +81,9 @@
         <button onclick="exporter.exportPDF()">Export PDF</button>
     </div>
 
-
-
-    <!-- Editor (A4 page) -->
+    <!-- Editor-->
     <div class="page">
         <div id="editor" contenteditable="true">
-            <p>Step 7: MS Word vibe applied (A4 page + cursor focus).</p>
         </div>
     </div>
 
