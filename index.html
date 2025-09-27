@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>WordPad</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <!-- Tabs -->
     <div class="tabs">
@@ -42,6 +44,12 @@
         <button onclick="editor.execCmd('justifyLeft')">Left</button>
         <button onclick="editor.execCmd('justifyCenter')">Center</button>
         <button onclick="editor.execCmd('justifyRight')">Right</button>
+        
+        <button onclick="editor.execCmd('insertUnorderedList')">• Bulleted</button>
+        <button onclick="editor.execCmd('insertOrderedList')">1. Numbered</button>
+        <button onclick="editor.execCmd('outdent')">Outdent</button>
+        <button onclick="editor.execCmd('indent')">Indent</button>
+
     </div>
     <!-- Editor -->
     <div id="editor" contenteditable="true"></div>
