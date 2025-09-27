@@ -77,3 +77,16 @@ class Inserter {
     }
 }
 const inserter = new Inserter("editor");
+class Viewer {
+  constructor(editorId) { this.editor = document.getElementById(editorId); }
+  clearFormatting() { document.execCommand("removeFormat", false, null); }
+  resetContent() { if (confirm("Reset?")) this.editor.innerHTML = ""; }
+  copyPlain() { navigator.clipboard.writeText(this.editor.innerText); }
+  copyHTML() { navigator.clipboard.writeText(this.editor.innerHTML); }
+  previewDoc() {
+    const w = window.open("", "_blank");
+    w.document.write(this.editor.innerHTML);
+    w.document.close();
+  }
+}
+const viewer = new Viewer("editor");

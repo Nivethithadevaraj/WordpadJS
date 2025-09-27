@@ -12,6 +12,7 @@
     <div class="tabs">
         <button class="tab-btn active" data-tab="format">Format</button>
         <button class="tab-btn" data-tab="insert">Insert</button>
+        <button class="tab-btn" data-tab="docops">Document Ops</button>
     </div>
     <!-- Toolbar: Format -->
     <div class="toolbar" id="format" style="display:flex;">
@@ -58,6 +59,13 @@
         <button onclick="inserter.insertImage()">Insert Image (File)</button>
         <button onclick="inserter.insertImageURL()">Insert Image (URL)</button>
         <button onclick="inserter.insertTable()">Insert Table</button>
+    </div>
+    <div class="toolbar" id="docops">
+        <button onclick="viewer.clearFormatting()">Clear Formatting</button>
+        <button onclick="viewer.resetContent()">Reset Document</button>
+        <button onclick="viewer.copyPlain()">Copy Plain Text</button>
+        <button onclick="viewer.copyHTML()">Copy HTML</button>
+        <button onclick="viewer.previewDoc()">Preview</button>
     </div>
     <!-- Editor -->
     <div id="editor" contenteditable="true"></div>
