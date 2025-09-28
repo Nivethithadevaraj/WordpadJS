@@ -6,7 +6,6 @@
     <title>WordPad</title>
     <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
     <!-- Tabs -->
     <div class="tabs">
@@ -17,9 +16,19 @@
         <button class="tab-btn" data-tab="export">Export</button>
     </div>
 
-    <!-- Toolbars -->
-    <div class="toolbar" id="home" style="display:flex;">
-        <!-- Formatting-->
+    <!-- File Toolbar -->
+    <div class="toolbar" id="file" style="display:flex;">
+        <button onclick="fileManager.newDoc()">New</button>
+        <button onclick="fileManager.openFile()">Open</button>
+        <button onclick="fileManager.saveFile()">Save</button>
+        <button onclick="fileManager.saveAs()">Save As</button>
+        <button onclick="fileManager.toggleAutoSave()">Toggle AutoSave</button>
+        <span id="autosaveStatus">AutoSave: OFF</span>
+        <span id="currentFile" style="margin-left:20px;font-weight:bold;">Current File: Untitled</span>
+    </div>
+
+    <!-- Home Toolbar -->
+    <div class="toolbar" id="home">
         <select onchange="editor.execCmd('fontName', this.value)">
             <option value="Calibri">Calibri</option>
             <option value="Arial">Arial</option>
@@ -52,22 +61,14 @@
         <button onclick="editor.execCmd('outdent')">Outdent</button>
         <button onclick="editor.execCmd('indent')">Indent</button>
     </div>
-    <div class="toolbar" id="file">
-        <button onclick="fileManager.newDoc()">New</button>
-        <input type="file" id="openFile" style="display:none" onchange="fileManager.openDoc(event)">
-        <button onclick="document.getElementById('openFile').click()">Open</button>
-        <button onclick="fileManager.saveToFile()">Save</button>
-        <button onclick="fileManager.toggleAutoSave()">Toggle AutoSave</button>
-        <span id="autosaveStatus">AutoSave: OFF</span>
-    </div>
-
+    <!-- Insert Toolbar -->
     <div class="toolbar" id="insert">
         <button onclick="inserter.insertLink()">Insert Link</button>
         <button onclick="inserter.insertImage()">Insert Image (File)</button>
         <button onclick="inserter.insertImageURL()">Insert Image (URL)</button>
         <button onclick="inserter.insertTable()">Insert Table</button>
     </div>
-
+    <!-- Document Ops Toolbar -->
     <div class="toolbar" id="docops">
         <button onclick="viewer.clearFormatting()">Clear Formatting</button>
         <button onclick="viewer.resetContent()">Reset Document</button>
@@ -75,20 +76,17 @@
         <button onclick="viewer.copyHTML()">Copy HTML</button>
         <button onclick="viewer.previewDoc()">Preview</button>
     </div>
-
+    <!-- Export Toolbar -->
     <div class="toolbar" id="export">
         <input id="docTitle" placeholder="Title">
         <input id="docAuthor" placeholder="Author">
         <button onclick="exporter.exportWord()">Export .doc</button>
         <button onclick="exporter.exportPDF()">Export PDF</button>
     </div>
-
-    <!-- Editor-->
+    <!-- Editor Area -->
     <div class="page">
-        <div id="editor" contenteditable="true">
-        </div>
+        <div id="editor" contenteditable="true"></div>
     </div>
-
     <script src="script.js"></script>
 </body>
 

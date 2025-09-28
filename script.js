@@ -88,25 +88,85 @@ class Exporter {
     }
     exportPDF() { const w = window.open("", "_blank"); w.document.write(this.editor.innerHTML); w.print(); }
 }
-
 class FileManager {
-    constructor(editorId) { this.editor = document.getElementById(editorId); this.autoSave = false; this.restore(); }
-    newDoc() { if (confirm("Clear?")) this.editor.innerHTML = ""; }
-    openDoc(e) {
-        const f = e.target.files[0]; if (!f) return;
-        const r = new FileReader(); r.onload = ev => { this.editor.innerHTML = ev.target.result; }; r.readAsText(f);
+    constructor(editorId) {
+        this.editor = document.getElementById(editorId);
+        this.fileHandle = null;
+        this.fileName = "Untitled Document";
+        this.autoSaveInterval = null;
+        this.updateTitle();
     }
-    saveToFile() {
-        const blob = new Blob([this.editor.innerHTML], { type: "text/html" });
-        const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "document.html"; a.click();
+
+    updateTitle() {
+        document.title = this.fileName + " - WordPad";
+        const label = document.getElementById("currentFile");
+        if (label) label.textContent = "Current File: " + this.fileName;
     }
+
+    newDoc() {
+        if (confirm("Clear the document?")) {
+            this.editor.innerHTML = "";
+            this.fileHandle = null;
+            this.fileName = "Untitled Document";
+            this.updateTitle();
+        }
+    }
+
+    async openFile() {
+        try {
+            [this.fileHandle] = await window.showOpenFilePicker({
+                types: [{ description: "HTML Document", accept: { "text/html": [".html"] } }]
+            });
+            const file = await this.fileHandle.getFile();
+            const text = await file.text();
+            this.editor.innerHTML = text;
+            this.fileName = this.fileHandle.name;
+            this.updateTitle();
+        } catch (err) {
+            console.error("Open cancelled", err);
+        }
+    }
+
+    async saveAs() {
+        try {
+            this.fileHandle = await window.showSaveFilePicker({
+                suggestedName: "document.html",
+                types: [{ description: "HTML Document", accept: { "text/html": [".html"] } }]
+            });
+            this.fileName = this.fileHandle.name;
+            await this.saveFile();
+            this.updateTitle();
+        } catch (err) {
+            console.error("Save As cancelled", err);
+        }
+    }
+
+    async saveFile() {
+        try {
+            if (!this.fileHandle) {
+                await this.saveAs();
+                return;
+            }
+            const writable = await this.fileHandle.createWritable();
+            await writable.write(this.editor.innerHTML);
+            await writable.close();
+            console.log("Saved:", this.fileName);
+        } catch (err) {
+            console.error("Save failed", err);
+        }
+    }
+
     toggleAutoSave() {
-        this.autoSave = !this.autoSave;
-        document.getElementById("autosaveStatus").innerText = "AutoSave: " + (this.autoSave ? "ON" : "OFF");
-        if (this.autoSave) this.timer = setInterval(() => this.save(), 4000); else clearInterval(this.timer);
+        const status = document.getElementById("autosaveStatus");
+        if (this.autoSaveInterval) {
+            clearInterval(this.autoSaveInterval);
+            this.autoSaveInterval = null;
+            if (status) status.textContent = "AutoSave: OFF";
+        } else {
+            this.autoSaveInterval = setInterval(() => this.saveFile(), 3000);
+            if (status) status.textContent = "AutoSave: ON → " + this.fileName;
+        }
     }
-    save() { localStorage.setItem("autosave", this.editor.innerHTML); }
-    restore() { const saved = localStorage.getItem("autosave"); if (saved) this.editor.innerHTML = saved; }
 }
 
 // Instances
@@ -128,4 +188,3 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
         document.getElementById(btn.dataset.tab).style.display = "flex";
     });
 });
-// localStorage.removeItem("autosave");
