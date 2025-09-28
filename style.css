@@ -1,28 +1,26 @@
+:root {
+    --bg: #e5e5e5;
+    --panel: #fff;
+    --panel-border: #ddd;
+    --text: #000;
+    --tab-bg: #eee;
+    --tab-active: #ddd;
+    --editor-bg: #ffffff;
+    --editor-text: #000;
+    --shadow: rgba(0, 0, 0, 0.2);
+}
+
+* {
+    box-sizing: border-box;
+}
+
 body {
     font-family: Calibri, Arial, sans-serif;
     margin: 0;
     padding: 16px;
-    background: #e5e5e5;
-}
-
-select option[value="Calibri"] {
-    font-family: Calibri, sans-serif;
-}
-
-select option[value="Arial"] {
-    font-family: Arial, sans-serif;
-}
-
-select option[value="Times New Roman"] {
-    font-family: "Times New Roman", serif;
-}
-
-select option[value="Georgia"] {
-    font-family: Georgia, serif;
-}
-
-select option[value="Verdana"] {
-    font-family: Verdana, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    transition: background 0.25s, color 0.25s;
 }
 
 .tabs {
@@ -31,15 +29,16 @@ select option[value="Verdana"] {
     margin-bottom: 8px;
 }
 
-.tab-btn {
+.tab-btn,
+.mode-btn {
     padding: 6px 12px;
     cursor: pointer;
-    border: 1px solid #ccc;
-    background: #eee;
+    border: 1px solid var(--panel-border);
+    background: var(--tab-bg);
 }
 
 .tab-btn.active {
-    background: #ddd;
+    background: var(--tab-active);
     font-weight: bold;
 }
 
@@ -47,8 +46,8 @@ select option[value="Verdana"] {
     display: none;
     gap: 8px;
     padding: 8px;
-    background: #fff;
-    border: 1px solid #ddd;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
     border-radius: 6px;
     flex-wrap: wrap;
 }
@@ -61,13 +60,14 @@ select option[value="Verdana"] {
 
 #editor {
     width: 794px;
-    /* A4 width */
     min-height: 1123px;
-    /* A4 height */
-    background: white;
+    background: var(--editor-bg);
     border: 1px solid #ccc;
     padding: 40px;
-    box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 0 8px var(--shadow);
+    outline: none;
+    color: var(--editor-text);
+    transition: background 0.25s, color 0.25s;
 }
 
 #editor img,
@@ -99,31 +99,35 @@ input[type=text] {
     padding: 6px;
 }
 
-.preview-body {
-    margin: 0;
-    background: #e5e5e5;
-    display: flex;
-    justify-content: center;
-    padding: 20px;
+mark.search-mark {
+    background: #ffeb3b;
+    padding: 0;
+    border-radius: 2px;
 }
 
-.preview-page {
-    width: 794px;
-    min-height: 1123px;
-    background: white;
-    padding: 40px;
-    border: 1px solid #ccc;
-    box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+mark.search-mark.current {
+    background: #ff9800;
 }
 
-.preview-page h1.title {
-    text-align: center;
-    font-size: 20px;
-    margin-bottom: 20px;
+.find-status {
+    margin-left: 8px;
+    font-size: 0.9rem;
+    color: #333;
 }
 
-button.active-format {
-    background: #0078d7;
-    color: white;
-    border: 1px solid #005a9e;
+body.dark {
+    --bg: #1e1e1e;
+    --panel: #2b2b2b;
+    --panel-border: #444;
+    --text: #f0f0f0;
+    --tab-bg: #3a3a3a;
+    --tab-active: #555;
+    --editor-bg: #202020;
+    --editor-text: #f6f6f6;
+    --shadow: rgba(0, 0, 0, 0.6);
+}
+
+.mode-btn[aria-pressed="true"] {
+    outline: 2px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 0 0 6px rgba(0, 0, 0, 0.3) inset;
 }

@@ -15,6 +15,8 @@
         <button class="tab-btn" data-tab="insert">Insert</button>
         <button class="tab-btn" data-tab="docops">Document Ops</button>
         <button class="tab-btn" data-tab="export">Export</button>
+        <button class="tab-btn" data-tab="findreplace">Find & Replace</button>
+        <button id="modeToggle" class="mode-btn" aria-pressed="false">🌙 Dark</button>
     </div>
 
     <!-- File Toolbar -->
@@ -63,6 +65,7 @@
         <button onclick="editor.execCmd('outdent')">Outdent</button>
         <button onclick="editor.execCmd('indent')">Indent</button>
     </div>
+
     <!-- Insert Toolbar -->
     <div class="toolbar" id="insert">
         <button onclick="inserter.insertLink()">Insert Link</button>
@@ -70,6 +73,7 @@
         <button onclick="inserter.insertImageURL()">Insert Image (URL)</button>
         <button onclick="inserter.insertTable()">Insert Table</button>
     </div>
+
     <!-- Document Ops Toolbar -->
     <div class="toolbar" id="docops">
         <button onclick="viewer.clearFormatting()">Clear Formatting</button>
@@ -78,6 +82,7 @@
         <button onclick="viewer.copyHTML()">Copy HTML</button>
         <button onclick="viewer.previewDoc()">Preview</button>
     </div>
+
     <!-- Export Toolbar -->
     <div class="toolbar" id="export">
         <input id="docTitle" placeholder="Title">
@@ -85,6 +90,18 @@
         <button onclick="exporter.exportWord()">Export .doc</button>
         <button onclick="exporter.exportPDF()">Export PDF</button>
     </div>
+
+    <!-- Find & Replace Toolbar -->
+    <div class="toolbar" id="findreplace">
+        <input type="text" id="findText" placeholder="Find text">
+        <input type="text" id="replaceText" placeholder="Replace with">
+        <button id="btn-find-next" onclick="finder.findNext()">Find Next</button>
+        <button id="btn-replace" onclick="finder.replace()">Replace</button>
+        <button id="btn-replace-all" onclick="finder.replaceAll()">Replace All</button>
+        <button id="btn-clear" onclick="finder.clearHighlights()">Clear</button>
+        <span id="findStatus" class="find-status" aria-live="polite"></span>
+    </div>
+
     <!-- Editor Area -->
     <div class="page">
         <div id="editor" contenteditable="true"></div>
@@ -92,4 +109,5 @@
     <script src="script.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </body>
+
 </html>
