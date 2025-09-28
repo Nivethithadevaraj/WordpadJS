@@ -83,7 +83,7 @@ class Viewer {
     }
 }
 
-//Exporter
+//Exporter 
 class Exporter {
     constructor(editorId) { this.editor = document.getElementById(editorId); }
     getMetaData() {
@@ -185,7 +185,7 @@ class FileManager {
     }
 }
 
-// FINDER
+//Finder
 class Finder {
     constructor(editorId) {
         this.editor = document.getElementById(editorId);
@@ -194,7 +194,7 @@ class Finder {
         this.statusEl = document.getElementById("findStatus");
     }
 
-    _getTextNodes() {
+    getTextNodes() {
         const nodes = [];
         const walker = document.createTreeWalker(this.editor, NodeFilter.SHOW_TEXT, {
             acceptNode(node) {
@@ -209,16 +209,17 @@ class Finder {
         return nodes;
     }
 
-    _getPlainText() {
-        const nodes = this._getTextNodes();
+    getPlainText() {
+        const nodes = this.getTextNodes();
         return nodes.map(n => n.nodeValue).join('');
     }
 
-    _rangeFromOffset(startOffset, length) {
-        const nodes = this._getTextNodes();
+    makeRangeFromOffset(startOffset, length) {
+        const nodes = this.getTextNodes();
         let acc = 0;
         let startNode = null, startNodeOffset = 0;
         let endNode = null, endNodeOffset = 0;
+
         for (let n of nodes) {
             const l = n.nodeValue.length;
             if (startOffset < acc + l) {
@@ -229,6 +230,7 @@ class Finder {
             acc += l;
         }
         if (!startNode) return null;
+
         const endOffsetGlobal = startOffset + length;
         acc = 0;
         for (let n of nodes) {
@@ -244,12 +246,13 @@ class Finder {
             endNode = nodes[nodes.length - 1];
             endNodeOffset = endNode.nodeValue.length;
         }
+
         const range = document.createRange();
         try {
             range.setStart(startNode, startNodeOffset);
             range.setEnd(endNode, endNodeOffset);
             return range;
-        } catch (e) {
+        } catch {
             return null;
         }
     }
@@ -262,85 +265,78 @@ class Finder {
         });
         this.lastIndex = 0;
         this.lastQuery = "";
-        this._flashStatus("Highlights cleared");
+        this.showStatus("Highlights cleared");
     }
 
-    _flashStatus(msg, timeout = 2000) {
+    showStatus(msg, timeout = 2000) {
         if (!this.statusEl) return;
         this.statusEl.textContent = msg;
         clearTimeout(this._statusTimer);
         this._statusTimer = setTimeout(() => this.statusEl.textContent = '', timeout);
     }
 
-    _highlightRange(range) {
-        if (!range) return null;
-        const mark = document.createElement('mark');
-        mark.className = 'search-mark current';
-        const content = range.extractContents();
-        mark.appendChild(content);
-        range.insertNode(mark);
-        document.querySelectorAll('mark.search-mark').forEach(m => {
-            if (m !== mark) m.classList.remove('current');
-        });
-        mark.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        return mark;
-    }
-
     findNext() {
         const q = document.getElementById("findText").value;
         if (!q) {
-            this._flashStatus("Enter text to find");
+            this.showStatus("Enter text to find");
             return;
         }
 
         if (this.lastQuery !== q) {
-            this.lastIndex = 0;
-            this.lastQuery = q;
             this.clearHighlights();
-        } else {
-            const current = this.editor.querySelector('mark.search-mark.current');
-            if (current) {
-                const textNode = document.createTextNode(current.textContent);
-                current.parentNode.replaceChild(textNode, current);
-            }
-        }
-
-        const plain = this._getPlainText();
-        const lower = plain.toLowerCase();
-        const query = q.toLowerCase();
-
-        let pos = lower.indexOf(query, this.lastIndex);
-        let wrapped = false;
-        if (pos === -1 && this.lastIndex !== 0) {
-            pos = lower.indexOf(query, 0);
-            wrapped = true;
-        }
-
-        if (pos === -1) {
-            this._flashStatus("No matches");
+            this.lastQuery = q;
             this.lastIndex = 0;
+
+            // highlight all matches
+            const regex = new RegExp(q, "gi");
+            this.getTextNodes().forEach(node => {
+                const frag = document.createDocumentFragment();
+                let lastIndex = 0;
+                let match;
+                while ((match = regex.exec(node.nodeValue)) !== null) {
+                    if (match.index > lastIndex) {
+                        frag.appendChild(document.createTextNode(node.nodeValue.substring(lastIndex, match.index)));
+                    }
+                    const mark = document.createElement("mark");
+                    mark.className = "search-mark";
+                    mark.textContent = match[0];
+                    frag.appendChild(mark);
+                    lastIndex = match.index + match[0].length;
+                }
+                if (lastIndex < node.nodeValue.length) {
+                    frag.appendChild(document.createTextNode(node.nodeValue.substring(lastIndex)));
+                }
+                if (frag.childNodes.length) node.parentNode.replaceChild(frag, node);
+            });
+        }
+
+        const marks = Array.from(this.editor.querySelectorAll("mark.search-mark"));
+        if (!marks.length) {
+            this.showStatus("No matches");
             return;
         }
 
-        const range = this._rangeFromOffset(pos, query.length);
-        if (!range) { this._flashStatus("Could not create range"); return; }
+        const current = this.editor.querySelector("mark.search-mark.current");
+        let index = current ? marks.indexOf(current) + 1 : 0;
+        if (index >= marks.length) index = 0;
 
-        this._highlightRange(range);
+        marks.forEach(m => m.classList.remove("current"));
+        marks[index].classList.add("current");
+        marks[index].scrollIntoView({ behavior: "smooth", block: "center" });
 
-        this.lastIndex = pos + query.length;
-        this._flashStatus(wrapped ? "Found (wrapped to start)" : "Found");
+        this.showStatus(`Match ${index + 1} of ${marks.length}`);
     }
 
     replace() {
         const q = document.getElementById("findText").value;
         const r = document.getElementById("replaceText").value;
-        if (!q) { this._flashStatus("Enter text to replace"); return; }
+        if (!q) { this.showStatus("Enter text to replace"); return; }
 
         let current = this.editor.querySelector('mark.search-mark.current');
         if (!current) {
             this.findNext();
             current = this.editor.querySelector('mark.search-mark.current');
-            if (!current) { this._flashStatus("No match to replace"); return; }
+            if (!current) { this.showStatus("No match to replace"); return; }
         }
 
         const replacementNode = document.createTextNode(r);
@@ -348,15 +344,15 @@ class Finder {
 
         this.lastQuery = q;
         this.clearHighlights();
-        this._flashStatus("Replaced one");
+        this.showStatus("Replaced one");
     }
 
     replaceAll() {
         const q = document.getElementById("findText").value;
         const r = document.getElementById("replaceText").value;
-        if (!q) { this._flashStatus("Enter text to replace"); return; }
+        if (!q) { this.showStatus("Enter text to replace"); return; }
 
-        const nodes = this._getTextNodes();
+        const nodes = this.getTextNodes();
         const regex = new RegExp(q, "gi");
         let total = 0;
         nodes.forEach(node => {
@@ -370,14 +366,12 @@ class Finder {
         this.clearHighlights();
         this.lastIndex = 0;
         this.lastQuery = "";
-        this._flashStatus(total ? `Replaced ${total} occurrence(s)` : "No matches to replace");
+        this.showStatus(total ? `Replaced ${total} occurrence(s)` : "No matches to replace");
     }
 }
 
-//Initialization and wiring
-
+// Initialization
 document.addEventListener('DOMContentLoaded', () => {
-    // create instances (now that DOM exists)
     window.editor = new Editor("editor");
     window.inserter = new Inserter("editor");
     window.viewer = new Viewer("editor");
@@ -385,10 +379,9 @@ document.addEventListener('DOMContentLoaded', () => {
     window.fileManager = new FileManager("editor");
     window.finder = new Finder("editor");
 
-    // initial focus
     if (editor && editor.editor) editor.editor.focus();
 
-    // Tab switching (only elements with class .tab-btn)
+    // Tab switching
     document.querySelectorAll(".tab-btn").forEach(btn => {
         btn.addEventListener("click", () => {
             document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
@@ -399,7 +392,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    //MODE TOGGLE
+    // Dark / Light Mode Toggle
     const toggleBtn = document.getElementById("modeToggle");
     function setMode(mode) {
         if (!toggleBtn) return;
@@ -415,12 +408,8 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem("theme", "light");
         }
     }
-
-    // Restore saved theme (default to light)
     const savedTheme = localStorage.getItem("theme") || "light";
     setMode(savedTheme);
-
-    // Click handler
     if (toggleBtn) {
         toggleBtn.addEventListener("click", () => {
             const isDark = document.body.classList.contains("dark");
