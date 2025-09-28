@@ -180,7 +180,7 @@ class FileManager {
             if (status) status.textContent = "AutoSave: OFF";
         } else {
             this.autoSaveInterval = setInterval(() => this.saveFile(), 3000);
-            if (status) status.textContent = "AutoSave: ON → " + this.fileName;
+            if (status) status.textContent = "AutoSave: ON ";
         }
     }
 }
