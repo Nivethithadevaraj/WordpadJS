@@ -6,6 +6,7 @@
     <title>WordPad</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <!-- Tabs -->
     <div class="tabs">
@@ -17,7 +18,7 @@
     </div>
 
     <!-- File Toolbar -->
-    <div class="toolbar" id="file" style="display:flex;">
+    <div class="toolbar" id="file">
         <button onclick="fileManager.newDoc()">New</button>
         <button onclick="fileManager.openFile()">Open</button>
         <button onclick="fileManager.saveFile()">Save</button>
@@ -28,7 +29,7 @@
     </div>
 
     <!-- Home Toolbar -->
-    <div class="toolbar" id="home">
+    <div class="toolbar" id="home" style="display:flex;">
         <select onchange="editor.execCmd('fontName', this.value)">
             <option value="Calibri">Calibri</option>
             <option value="Arial">Arial</option>
@@ -48,9 +49,10 @@
             <option value="H1">Heading 1</option>
             <option value="H2">Heading 2</option>
         </select>
-        <button onclick="editor.execCmd('bold')"><b>B</b></button>
-        <button onclick="editor.execCmd('italic')"><i>I</i></button>
-        <button onclick="editor.execCmd('underline')"><u>U</u></button>
+        <button id="btn-bold" onclick="editor.execCmd('bold')"><b>B</b></button>
+        <button id="btn-italic" onclick="editor.execCmd('italic')"><i>I</i></button>
+        <button id="btn-underline" onclick="editor.execCmd('underline')"><u>U</u></button>
+
         <input type="color" onchange="editor.execCmd('foreColor', this.value)">
         <input type="color" onchange="editor.execCmd('hiliteColor', this.value)">
         <button onclick="editor.execCmd('justifyLeft')">Left</button>
@@ -88,6 +90,6 @@
         <div id="editor" contenteditable="true"></div>
     </div>
     <script src="script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </body>
-
 </html>
