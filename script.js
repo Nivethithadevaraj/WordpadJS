@@ -229,6 +229,7 @@ class Exporter {
 }
 
 //FileManager
+//FileManager (only AutoSave, no Save/Save As buttons)
 class FileManager {
     constructor(editorId) {
         this.editor = document.getElementById(editorId);
@@ -237,11 +238,13 @@ class FileManager {
         this.autoSaveInterval = null;
         this.updateTitle();
     }
+
     updateTitle() {
         document.title = this.fileName + " - WordPad";
         const label = document.getElementById("currentFile");
         if (label) label.textContent = "Current File: " + this.fileName;
     }
+
     newDoc() {
         if (confirm("Clear the document?")) {
             this.editor.innerHTML = "";
@@ -250,37 +253,51 @@ class FileManager {
             this.updateTitle();
         }
     }
-    async openFile() {
-        try {
-            [this.fileHandle] = await window.showOpenFilePicker({
-                types: [{ description: "HTML Document", accept: { "text/html": [".html"] } }]
-            });
-            const file = await this.fileHandle.getFile();
-            const text = await file.text();
-            this.editor.innerHTML = text;
-            this.fileName = this.fileHandle.name;
-            this.updateTitle();
-        } catch (err) { console.error("Open cancelled", err); }
-    }
-    async saveAs() {
-        try {
-            this.fileHandle = await window.showSaveFilePicker({
-                suggestedName: "document.html",
-                types: [{ description: "HTML Document", accept: { "text/html": [".html"] } }]
-            });
-            this.fileName = this.fileHandle.name;
-            await this.saveFile();
-            this.updateTitle();
-        } catch (err) { console.error("Save As cancelled", err); }
-    }
+
     async saveFile() {
         try {
-            if (!this.fileHandle) { await this.saveAs(); return; }
+            if (!this.fileHandle) {
+                this.fileHandle = await window.showSaveFilePicker({
+                    suggestedName: "document.docx",
+                    types: [{
+                        description: "Word Document",
+                        accept: {
+                            "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"]
+                        }
+                    }]
+                });
+                this.fileName = this.fileHandle.name;
+                this.updateTitle();
+            }
+
+            const title = document.getElementById("docTitle")?.value || "Untitled";
+            const author = document.getElementById("docAuthor")?.value || "Unknown";
+
+            const content = `
+              <html xmlns:o='urn:schemas-microsoft-com:office:office'
+                    xmlns:w='urn:schemas-microsoft-com:office:word'
+                    xmlns='http://www.w3.org/TR/REC-html40'>
+              <head><meta charset="utf-8"><title>${title}</title></head>
+              <body>
+                <h1>${title}</h1>
+                <p><b>Author:</b> ${author}</p>
+                ${this.editor.innerHTML}
+              </body>
+              </html>`;
+
+            const blob = new Blob([content], {
+                type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            });
+
             const writable = await this.fileHandle.createWritable();
-            await writable.write(this.editor.innerHTML);
+            await writable.write(blob);
             await writable.close();
-            console.log("Saved:", this.fileName);
-        } catch (err) { console.error("Save failed", err); }
+
+            console.log("AutoSaved:", this.fileName);
+            this.editor.focus();
+        } catch (err) {
+            console.error("AutoSave failed", err);
+        }
     }
     toggleAutoSave() {
         const status = document.getElementById("autosaveStatus");
@@ -294,6 +311,7 @@ class FileManager {
         }
     }
 }
+
 
 //Finder
 class Finder {
