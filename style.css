@@ -78,6 +78,13 @@ body {
     color: var(--editor-text);
     transition: background 0.25s, color 0.25s;
 }
+#editor img {
+  display: inline-block;
+  vertical-align: middle;
+  max-width: 100%;
+  height: auto;
+  cursor: move;
+}
 
 #editor img,
 #editor table {
