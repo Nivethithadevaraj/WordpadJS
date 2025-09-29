@@ -565,7 +565,7 @@ class Exporter {
     }
 }
 
-//FileManager
+// FileManager
 class FileManager {
     constructor(editorId) {
         this.editor = document.getElementById(editorId);
@@ -574,20 +574,54 @@ class FileManager {
         this.autoSaveInterval = null;
         this.updateTitle();
     }
+
     updateTitle() {
         document.title = this.fileName + " - WordPad";
         const label = document.getElementById("currentFile");
         if (label) label.textContent = "Current File: " + this.fileName;
     }
+
     newDoc() {
+        if (this.editor.innerHTML.trim() !== "") {
+            this.showNewDocModal();
+        } else {
+            this.clearDoc();
+        }
+    }
+
+    showNewDocModal() {
+        const modal = document.getElementById("newDocModal");
+        modal.style.display = "flex";
+
+        const saveBtn = document.getElementById("newDocSave");
+        const noSaveBtn = document.getElementById("newDocNoSave");
+        const cancelBtn = document.getElementById("newDocCancel");
+
+        saveBtn.onclick = async () => {
+            await this.saveFile();
+            this.clearDoc();
+            modal.style.display = "none";
+        };
+        noSaveBtn.onclick = () => {
+            this.clearDoc();
+            modal.style.display = "none";
+        };
+        cancelBtn.onclick = () => {
+            modal.style.display = "none";
+        };
+    }
+
+    clearDoc() {
         this.editor.innerHTML = "";
         this.fileHandle = null;
         this.fileName = "Untitled Document";
         this.updateTitle();
         if (window.historyManager) historyManager.save();
     }
+
     async saveFile() {
         try {
+            // If no handle yet → Save As
             if (!this.fileHandle) {
                 this.fileHandle = await window.showSaveFilePicker({
                     suggestedName: "document.docx",
@@ -601,31 +635,32 @@ class FileManager {
                 this.fileName = this.fileHandle.name;
                 this.updateTitle();
             }
+
             const title = document.getElementById("docTitle")?.value || "Untitled";
             const author = document.getElementById("docAuthor")?.value || "Unknown";
+
             const content = `
-              <html xmlns:o='urn:schemas-microsoft-com:office:office'
-                    xmlns:w='urn:schemas-microsoft-com:office:word'
-                    xmlns='http://www.w3.org/TR/REC-html40'>
-              <head><meta charset="utf-8"><title>${title}</title></head>
+              <html><head><meta charset="utf-8"><title>${title}</title></head>
               <body>
                 <h1>${title}</h1>
                 <p><b>Author:</b> ${author}</p>
                 ${this.editor.innerHTML}
               </body>
               </html>`;
+
             const blob = new Blob([content], {
                 type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             });
+
+            // ✅ Always overwrite current handle silently
             const writable = await this.fileHandle.createWritable();
             await writable.write(blob);
             await writable.close();
-            console.log("AutoSaved:", this.fileName);
-            this.editor.focus();
         } catch (err) {
-            console.error("AutoSave failed", err);
+            console.error("Save failed", err);
         }
     }
+
     toggleAutoSave() {
         const status = document.getElementById("autosaveStatus");
         if (this.autoSaveInterval) {
@@ -634,8 +669,48 @@ class FileManager {
             if (status) status.textContent = "AutoSave: OFF";
         } else {
             this.autoSaveInterval = setInterval(() => this.saveFile(), 3000);
-            if (status) status.textContent = "AutoSave: ON ";
+            if (status) status.textContent = "AutoSave: ON";
         }
+    }
+
+    async openFile() {
+        try {
+            const [fileHandle] = await window.showOpenFilePicker({
+                types: [{
+                    description: "Word Document",
+                    accept: {
+                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"]
+                    }
+                }],
+                multiple: false
+            });
+
+            this.fileHandle = fileHandle;
+            this.fileName = fileHandle.name;
+            this.updateTitle();
+
+            const file = await fileHandle.getFile();
+            const arrayBuffer = await file.arrayBuffer();
+
+            const text = await this.readDocxAsText(arrayBuffer);
+            this.editor.innerHTML = text;
+            if (window.historyManager) historyManager.save();
+        } catch (err) {
+            console.error("Open file failed", err);
+        }
+    }
+
+    async readDocxAsText(arrayBuffer) {
+        if (window.mammoth) {
+            try {
+                const result = await mammoth.extractRawText({ arrayBuffer });
+                return result.value.replace(/\n/g, "<br>");
+            } catch {
+                return "<p>⚠️ Could not parse .docx</p>";
+            }
+        }
+        return `<p>Opened .docx file (${arrayBuffer.byteLength} bytes). 
+                For full parsing, include mammoth.js.</p>`;
     }
 }
 
