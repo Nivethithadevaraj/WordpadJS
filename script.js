@@ -199,7 +199,7 @@ class Inserter {
             .then(blob => {
                 const reader = new FileReader();
                 reader.onload = () => {
-                    img.src = reader.result; 
+                    img.src = reader.result;
                     this.editor.appendChild(img);
                     historyManager.save();
                     this.editor.focus();
@@ -508,8 +508,11 @@ class Exporter {
         try {
             const { title, author } = this.getMetaData();
             const pages = Array.from(document.querySelectorAll(".editor-page"))
-                .map(p => `<div style="page-break-after: always; min-height:1123px; width:794px;">${p.innerHTML}</div>`)
-                .join('');
+                .map(p => `
+                <div style="page-break-after: always; min-height:1123px; width:794px;">
+                    ${p.innerHTML}
+                </div>
+            `).join('');
 
             const content = `
   <html xmlns:o='urn:schemas-microsoft-com:office:office'
@@ -518,6 +521,11 @@ class Exporter {
   <head>
     <meta charset="utf-8">
     <title>${title}</title>
+   <style>
+  table { border-collapse: collapse; }
+  td, th { border: 1px solid #000; padding: 5px; }
+  img { max-width: 100%; height: auto; }
+</style>
   </head>
   <body>
     ${pages}
@@ -532,6 +540,7 @@ class Exporter {
             this.clearMetaInputs();
         } catch (e) { }
     }
+
     exportPDF() {
         try {
             const { title, author } = this.getMetaData();
@@ -549,28 +558,44 @@ class Exporter {
             `).join('');
 
             const wrapper = document.createElement("div");
-            wrapper.innerHTML = pages;
+            wrapper.innerHTML = `
+          <style>
+  table { border-collapse: collapse; }
+  td, th { border: 1px solid #000; padding: 5px; }
+  img { max-width: 100%; height: auto; }
+</style>
+
+          ${pages}
+        `;
 
             const opt = {
-                margin: [0, 0, 0, 0],
+                margin: [20, 20, 20, 20], // add breathing space
                 filename: title + ".pdf",
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2, useCORS: true },
                 jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' }
             };
 
-            html2pdf().set(opt).from(wrapper).toPdf().get('pdf').then(pdf => {
-                pdf.setProperties({
-                    title,
-                    subject: "WordPad Export",
-                    author,
-                    keywords: "WordPad, Export, PDF",
-                    creator: "Custom WordPad Clone"
-                });
-            }).save();
+            html2pdf()
+                .set(opt)
+                .from(wrapper)
+                .toPdf()
+                .get('pdf')
+                .then(pdf => {
+                    pdf.setProperties({
+                        title,
+                        subject: "WordPad Export",
+                        author,
+                        keywords: "WordPad, Export, PDF",
+                        creator: "Custom WordPad Clone"
+                    });
+                })
+                .save();
+
             this.clearMetaInputs();
         } catch (e) { }
     }
+
 }
 
 // FileManager
