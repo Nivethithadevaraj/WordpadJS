@@ -78,12 +78,13 @@ body {
     color: var(--editor-text);
     transition: background 0.25s, color 0.25s;
 }
+
 #editor img {
-  display: inline-block;
-  vertical-align: middle;
-  max-width: 100%;
-  height: auto;
-  cursor: move;
+    display: inline-block;
+    vertical-align: middle;
+    max-width: 100%;
+    height: auto;
+    cursor: move;
 }
 
 #editor img,
@@ -179,14 +180,62 @@ button.active-format {
 .table-controls button:last-child {
     border-right: none;
 }
+
 .modal {
-  position: fixed; top:0; left:0; width:100%; height:100%;
-  background: rgba(0,0,0,0.5); display:flex; justify-content:center; align-items:center;
-  z-index: 2000;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
 }
+
 .modal-content {
-  background:#fff; padding:20px; border-radius:8px; text-align:center;
-  min-width:300px; box-shadow:0 4px 10px rgba(0,0,0,0.3);
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    min-width: 300px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
-.modal-actions { margin-top:15px; display:flex; justify-content:space-around; }
-.modal-actions button { padding:6px 12px; cursor:pointer; }
+
+.modal-actions {
+    margin-top: 15px;
+    display: flex;
+    justify-content: space-around;
+}
+
+.modal-actions button {
+    padding: 6px 12px;
+    cursor: pointer;
+}
+
+.page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.editor-page {
+    width: 794px;
+    min-height: 1123px;
+    margin: 40px auto;
+    padding: 0;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    background: white;
+}
+
+.editor-page>div {
+    margin: 40px;
+}
+
+.editor-page.exporting {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}

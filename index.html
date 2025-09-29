@@ -122,22 +122,23 @@
     </div>
 
     <!-- Editor Area -->
-    <div class="page">
-        <div id="editor" contenteditable="true"></div>
+    <div class="page" id="pageContainer">
+        <div id="editor" class="editor-page" contenteditable="true"></div>
     </div>
+    
     <script src="script.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
     <div id="newDocModal" class="modal" style="display:none;">
-  <div class="modal-content">
-    <p>Do you want to save before creating a new document?</p>
-    <div class="modal-actions">
-      <button id="newDocSave">💾 Save</button>
-      <button id="newDocNoSave">🆕 Don't Save</button>
-      <button id="newDocCancel">❌ Cancel</button>
+        <div class="modal-content">
+            <p>Do you want to save before creating a new document?</p>
+            <div class="modal-actions">
+                <button id="newDocSave">💾 Save</button>
+                <button id="newDocNoSave">🆕 Don't Save</button>
+                <button id="newDocCancel">❌ Cancel</button>
+            </div>
+        </div>
     </div>
-  </div>
-</div>
 </body>
 
 </html>

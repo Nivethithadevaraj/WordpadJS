@@ -199,7 +199,7 @@ class Inserter {
             .then(blob => {
                 const reader = new FileReader();
                 reader.onload = () => {
-                    img.src = reader.result; // embed as base64
+                    img.src = reader.result; 
                     this.editor.appendChild(img);
                     historyManager.save();
                     this.editor.focus();
@@ -504,51 +504,61 @@ class Exporter {
         if (t) t.value = "";
         if (a) a.value = "";
     }
-
     exportWord() {
         try {
             const { title, author } = this.getMetaData();
+            const pages = Array.from(document.querySelectorAll(".editor-page"))
+                .map(p => `<div style="page-break-after: always; min-height:1123px; width:794px;">${p.innerHTML}</div>`)
+                .join('');
+
             const content = `
-  <h1>${title}</h1><p>${author}</p>
-  <style>
-    table { border-collapse: collapse; }
-    td, th { border: 1px solid #000; padding: 5px; }
-    table, td, th { table-layout: fixed; }
-    img, table { max-width: 100%; }
-  </style>
-  ${this.editor.innerHTML}
+  <html xmlns:o='urn:schemas-microsoft-com:office:office'
+        xmlns:w='urn:schemas-microsoft-com:office:word'
+        xmlns='http://www.w3.org/TR/REC-html40'>
+  <head>
+    <meta charset="utf-8">
+    <title>${title}</title>
+  </head>
+  <body>
+    ${pages}
+  </body>
+  </html>
 `;
             const blob = new Blob([content], { type: "application/msword" });
             const a = document.createElement("a");
             a.href = URL.createObjectURL(blob);
             a.download = title + ".doc";
             a.click();
-
             this.clearMetaInputs();
-        } catch (e) {
-        }
+        } catch (e) { }
     }
-
     exportPDF() {
         try {
             const { title, author } = this.getMetaData();
+            const pages = Array.from(document.querySelectorAll(".editor-page"))
+                .map(p => `
+                <div style="
+                    page-break-after: always;
+                    min-height:1123px;
+                    width:794px;
+                    margin:0;
+                    padding:0;
+                ">
+                    ${p.innerHTML}
+                </div>
+            `).join('');
+
             const wrapper = document.createElement("div");
-            wrapper.innerHTML = `
-  <h1>${title}</h1><p><b>Author:</b> ${author}</p>
-  <style>
-    table { border-collapse: collapse; }
-    td, th { border: 1px solid #000; padding: 5px; }
-    table, td, th { table-layout: fixed; }
-    img, table { max-width: 100%; }
-  </style>
-  ${this.editor.innerHTML}
-`;
+            wrapper.innerHTML = pages;
+
             const opt = {
-                margin: 10, filename: title + ".pdf",
+                margin: [0, 0, 0, 0],
+                filename: title + ".pdf",
                 image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2 },
+                html2canvas: { scale: 2, useCORS: true },
                 jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' }
             };
+
             html2pdf().set(opt).from(wrapper).toPdf().get('pdf').then(pdf => {
                 pdf.setProperties({
                     title,
@@ -558,14 +568,11 @@ class Exporter {
                     creator: "Custom WordPad Clone"
                 });
             }).save();
-
             this.clearMetaInputs();
-        } catch (e) {
-        }
+        } catch (e) { }
     }
 }
 
-// FileManager
 // FileManager
 class FileManager {
     constructor(editorId) {
@@ -622,7 +629,6 @@ class FileManager {
 
     async saveFile() {
         try {
-            // Ask where to save only first time
             if (!this.fileHandle) {
                 this.fileHandle = await window.showSaveFilePicker({
                     suggestedName: "document.doc",
@@ -667,45 +673,37 @@ class FileManager {
     }
 
     async openFile() {
-    try {
-        const [fileHandle] = await window.showOpenFilePicker({
-            types: [{
-                description: "Word Documents",
-                accept: {
-                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
-                    "application/msword": [".doc"]
-                }
-            }],
-            multiple: false
-        });
-
-        this.fileHandle = fileHandle;
-        this.fileName = fileHandle.name;
-        this.updateTitle();
-
-        const file = await fileHandle.getFile();
-
-        if (file.name.endsWith(".docx")) {
-            // ✅ Use Mammoth for .docx
-            const arrayBuffer = await file.arrayBuffer();
-            const result = await mammoth.extractRawText({ arrayBuffer });
-            this.editor.innerHTML = result.value.replace(/\n/g, "<br>");
-        } else {
-            // ✅ Fallback for .doc (HTML-based)
-            const text = await file.text();
-            this.editor.innerHTML = text;
+        try {
+            const [fileHandle] = await window.showOpenFilePicker({
+                types: [{
+                    description: "Word Documents",
+                    accept: {
+                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
+                        "application/msword": [".doc"]
+                    }
+                }],
+                multiple: false
+            });
+            this.fileHandle = fileHandle;
+            this.fileName = fileHandle.name;
+            this.updateTitle();
+            const file = await fileHandle.getFile();
+            if (file.name.endsWith(".docx")) {
+                const arrayBuffer = await file.arrayBuffer();
+                const result = await mammoth.extractRawText({ arrayBuffer });
+                this.editor.innerHTML = result.value.replace(/\n/g, "<br>");
+            } else {
+                const text = await file.text();
+                this.editor.innerHTML = text;
+            }
+            if (window.historyManager) historyManager.save();
+        } catch (err) {
+            console.error("Open file failed", err);
         }
-
-        if (window.historyManager) historyManager.save();
-    } catch (err) {
-        console.error("Open file failed", err);
     }
-}
 
 
 }
-
-
 
 //Finder
 class Finder {
@@ -964,4 +962,22 @@ document.addEventListener('DOMContentLoaded', () => {
             historyManager.redo();
         }
     });
+    function applyPageBreaks() {
+        const container = document.getElementById("pageContainer");
+        const editors = Array.from(container.querySelectorAll(".editor-page"));
+
+        editors.forEach(ed => {
+            if (ed.scrollHeight > ed.offsetHeight) {
+                const newPage = document.createElement("div");
+                newPage.className = "editor-page";
+                newPage.contentEditable = "true";
+                while (ed.scrollHeight > ed.offsetHeight && ed.lastChild) {
+                    newPage.insertBefore(ed.lastChild, newPage.firstChild);
+                }
+
+                container.insertBefore(newPage, ed.nextSibling);
+            }
+        });
+    }
+    document.getElementById("editor").addEventListener("input", applyPageBreaks);
 });
