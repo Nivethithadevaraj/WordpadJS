@@ -149,6 +149,7 @@ class Inserter {
     insertLink() {
         const input = document.getElementById("linkUrl");
         const url = input?.value.trim();
+        this.editor.focus();
         if (!url) {
             this.showInsertStatus("⚠️ Enter a link URL", true);
             return;
@@ -157,7 +158,6 @@ class Inserter {
         historyManager.save();
         input.value = "";
         input.blur();
-        this.editor.focus();
         this.showInsertStatus("✅ Link inserted");
     }
 
@@ -566,6 +566,7 @@ class Exporter {
 }
 
 // FileManager
+// FileManager
 class FileManager {
     constructor(editorId) {
         this.editor = document.getElementById(editorId);
@@ -621,15 +622,13 @@ class FileManager {
 
     async saveFile() {
         try {
-            // If no handle yet → Save As
+            // Ask where to save only first time
             if (!this.fileHandle) {
                 this.fileHandle = await window.showSaveFilePicker({
-                    suggestedName: "document.docx",
+                    suggestedName: "document.doc",
                     types: [{
-                        description: "Word Document",
-                        accept: {
-                            "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"]
-                        }
+                        description: "Word Document (HTML-based)",
+                        accept: { "application/msword": [".doc"] }
                     }]
                 });
                 this.fileName = this.fileHandle.name;
@@ -640,19 +639,13 @@ class FileManager {
             const author = document.getElementById("docAuthor")?.value || "Unknown";
 
             const content = `
-              <html><head><meta charset="utf-8"><title>${title}</title></head>
-              <body>
-                <h1>${title}</h1>
-                <p><b>Author:</b> ${author}</p>
-                ${this.editor.innerHTML}
-              </body>
-              </html>`;
+              <h1>${title}</h1>
+              <p><b>Author:</b> ${author}</p>
+              ${this.editor.innerHTML}
+            `;
 
-            const blob = new Blob([content], {
-                type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            });
+            const blob = new Blob([content], { type: "application/msword" });
 
-            // ✅ Always overwrite current handle silently
             const writable = await this.fileHandle.createWritable();
             await writable.write(blob);
             await writable.close();
@@ -674,45 +667,45 @@ class FileManager {
     }
 
     async openFile() {
-        try {
-            const [fileHandle] = await window.showOpenFilePicker({
-                types: [{
-                    description: "Word Document",
-                    accept: {
-                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"]
-                    }
-                }],
-                multiple: false
-            });
+    try {
+        const [fileHandle] = await window.showOpenFilePicker({
+            types: [{
+                description: "Word Documents",
+                accept: {
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
+                    "application/msword": [".doc"]
+                }
+            }],
+            multiple: false
+        });
 
-            this.fileHandle = fileHandle;
-            this.fileName = fileHandle.name;
-            this.updateTitle();
+        this.fileHandle = fileHandle;
+        this.fileName = fileHandle.name;
+        this.updateTitle();
 
-            const file = await fileHandle.getFile();
+        const file = await fileHandle.getFile();
+
+        if (file.name.endsWith(".docx")) {
+            // ✅ Use Mammoth for .docx
             const arrayBuffer = await file.arrayBuffer();
-
-            const text = await this.readDocxAsText(arrayBuffer);
+            const result = await mammoth.extractRawText({ arrayBuffer });
+            this.editor.innerHTML = result.value.replace(/\n/g, "<br>");
+        } else {
+            // ✅ Fallback for .doc (HTML-based)
+            const text = await file.text();
             this.editor.innerHTML = text;
-            if (window.historyManager) historyManager.save();
-        } catch (err) {
-            console.error("Open file failed", err);
         }
-    }
 
-    async readDocxAsText(arrayBuffer) {
-        if (window.mammoth) {
-            try {
-                const result = await mammoth.extractRawText({ arrayBuffer });
-                return result.value.replace(/\n/g, "<br>");
-            } catch {
-                return "<p>⚠️ Could not parse .docx</p>";
-            }
-        }
-        return `<p>Opened .docx file (${arrayBuffer.byteLength} bytes). 
-                For full parsing, include mammoth.js.</p>`;
+        if (window.historyManager) historyManager.save();
+    } catch (err) {
+        console.error("Open file failed", err);
     }
 }
+
+
+}
+
+
 
 //Finder
 class Finder {

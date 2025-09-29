@@ -17,6 +17,7 @@
         <button class="tab-btn" data-tab="export">Export</button>
         <button class="tab-btn" data-tab="findreplace">Find & Replace</button>
         <button id="modeToggle" class="mode-btn" aria-pressed="false">🌙 Dark</button>
+        <span id="currentFile" style="margin-left:20px;font-weight:bold;">Current File: Untitled</span>
         <div style="margin-left:auto; display:flex; gap:6px;">
             <button onclick="historyManager.undo()">↩️ Undo</button>
             <button onclick="historyManager.redo()">↪️ Redo</button>
@@ -28,7 +29,6 @@
         <button onclick="fileManager.openFile()">Open</button>
         <button onclick="fileManager.toggleAutoSave()">Toggle AutoSave</button>
         <span id="autosaveStatus">AutoSave: OFF</span>
-        <span id="currentFile" style="margin-left:20px;font-weight:bold;">Current File: Untitled</span>
     </div>
 
     <!-- Home Toolbar -->
@@ -127,13 +127,13 @@
     </div>
     <script src="script.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="https://unpkg.com/mammoth/mammoth.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
     <div id="newDocModal" class="modal" style="display:none;">
   <div class="modal-content">
     <p>Do you want to save before creating a new document?</p>
     <div class="modal-actions">
       <button id="newDocSave">💾 Save</button>
-      <button id="newDocNoSave">🆕 Don’t Save</button>
+      <button id="newDocNoSave">🆕 Don't Save</button>
       <button id="newDocCancel">❌ Cancel</button>
     </div>
   </div>
