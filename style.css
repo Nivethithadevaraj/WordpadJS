@@ -93,6 +93,13 @@ button {
     padding: 6px 8px;
 }
 
+button.active-format {
+    background-color: #007BFF;
+    /* Bootstrap blue */
+    color: white;
+    border: 1px solid #0056b3;
+}
+
 select,
 input[type=color],
 input[type=text] {
@@ -130,4 +137,10 @@ body.dark {
 .mode-btn[aria-pressed="true"] {
     outline: 2px solid rgba(255, 255, 255, 0.06);
     box-shadow: 0 0 6px rgba(0, 0, 0, 0.3) inset;
+}
+
+button.active-format {
+    background-color: #007BFF;
+    color: #fff;
+    border: 1px solid #0056b3;
 }

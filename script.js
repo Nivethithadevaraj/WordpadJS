@@ -20,14 +20,31 @@ class Editor {
             bold: document.queryCommandState("bold"),
             italic: document.queryCommandState("italic"),
             underline: document.queryCommandState("underline"),
+            justifyLeft: document.queryCommandState("justifyLeft"),
+            justifyCenter: document.queryCommandState("justifyCenter"),
+            justifyRight: document.queryCommandState("justifyRight"),
+            insertUnorderedList: document.queryCommandState("insertUnorderedList"),
+            insertOrderedList: document.queryCommandState("insertOrderedList")
         };
-        const b = document.getElementById("btn-bold");
-        const i = document.getElementById("btn-italic");
-        const u = document.getElementById("btn-underline");
-        if (b) b.classList.toggle("active-format", states.bold);
-        if (i) i.classList.toggle("active-format", states.italic);
-        if (u) u.classList.toggle("active-format", states.underline);
+
+        const buttons = {
+            bold: document.getElementById("btn-bold"),
+            italic: document.getElementById("btn-italic"),
+            underline: document.getElementById("btn-underline"),
+            justifyLeft: document.getElementById("btn-justifyLeft"),
+            justifyCenter: document.getElementById("btn-justifyCenter"),
+            justifyRight: document.getElementById("btn-justifyRight"),
+            insertUnorderedList: document.getElementById("btn-bulleted"),
+            insertOrderedList: document.getElementById("btn-numbered")
+        };
+
+        for (let cmd in states) {
+            if (buttons[cmd]) {
+                buttons[cmd].classList.toggle("active-format", states[cmd]);
+            }
+        }
     }
+
 }
 
 //Inserter
@@ -379,7 +396,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.fileManager = new FileManager("editor");
     window.finder = new Finder("editor");
 
-    if (editor && editor.editor) editor.editor.focus();
+    if (Editor && Editor.editor) Editor.editor.focus();
 
     // Tab switching
     document.querySelectorAll(".tab-btn").forEach(btn => {

@@ -57,13 +57,12 @@
 
         <input type="color" onchange="editor.execCmd('foreColor', this.value)">
         <input type="color" onchange="editor.execCmd('hiliteColor', this.value)">
-        <button onclick="editor.execCmd('justifyLeft')">Left</button>
-        <button onclick="editor.execCmd('justifyCenter')">Center</button>
-        <button onclick="editor.execCmd('justifyRight')">Right</button>
-        <button onclick="editor.execCmd('insertUnorderedList')">• Bulleted</button>
-        <button onclick="editor.execCmd('insertOrderedList')">1. Numbered</button>
-        <button onclick="editor.execCmd('outdent')">Outdent</button>
-        <button onclick="editor.execCmd('indent')">Indent</button>
+        <button id="btn-justifyLeft" onclick="editor.execCmd('justifyLeft')">Left</button>
+        <button id="btn-justifyCenter" onclick="editor.execCmd('justifyCenter')">Center</button>
+        <button id="btn-justifyRight" onclick="editor.execCmd('justifyRight')">Right</button>
+        <button id="btn-bulleted" onclick="editor.execCmd('insertUnorderedList')">• Bulleted</button>
+        <button id="btn-numbered" onclick="editor.execCmd('insertOrderedList')">1. Numbered</button>
+
     </div>
 
     <!-- Insert Toolbar -->
