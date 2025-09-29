@@ -139,24 +139,56 @@ class Inserter {
 
 //Viewer
 class Viewer {
-    constructor(editorId) { this.editor = document.getElementById(editorId); }
-    clearFormatting() { document.execCommand("removeFormat", false, null); }
-    resetContent() { if (confirm("Reset?")) this.editor.innerHTML = ""; }
-    copyPlain() { navigator.clipboard.writeText(this.editor.innerText); }
-    copyHTML() { navigator.clipboard.writeText(this.editor.innerHTML); }
+    constructor(editorId) {
+        this.editor = document.getElementById(editorId);
+    }
+
+    clearFormatting() {
+        const selection = window.getSelection();
+        if (!selection.rangeCount) return;
+
+        const range = selection.getRangeAt(0);
+        const content = range.cloneContents();
+        const div = document.createElement("div");
+        div.appendChild(content);
+        const plain = div.textContent || div.innerText || "";
+        document.execCommand("insertText", false, plain);
+    }
+    resetContent() {
+        if (confirm("Reset?")) this.editor.innerHTML = "";
+    }
+    copyPlain() {
+        const text = this.editor.innerText;
+        navigator.clipboard.writeText(text).then(() => {
+            alert("Copied plain text!");
+        });
+    }
+    copyHTML() {
+        const html = this.editor.innerHTML;
+        navigator.clipboard.writeText(html).then(() => {
+            alert("Copied HTML!");
+        });
+    }
     previewDoc() {
-        const title = document.getElementById("docTitle")?.value || "";
+        const title = document.getElementById("docTitle")?.value || "Preview";
         const content = this.editor.innerHTML;
         const previewWin = window.open("", "_blank", "width=900,height=700");
         previewWin.document.write(`
           <!DOCTYPE html>
-          <html><head><title>${title}</title><link rel="stylesheet" href="style.css"></head>
-          <body class="preview-body">
-            <div class="page preview-page">
-              <h1 class="title">${title}</h1>
-              ${content}
-            </div>
-          </body></html>`);
+          <html>
+          <head>
+            <title>${title}</title>
+            <style>
+              body { font-family: Calibri, Arial, sans-serif; padding: 20px; }
+              .title { text-align:center; margin-bottom:20px; }
+            </style>
+          </head>
+          <body>
+            <h1 class="title">${title}</h1>
+            ${content}
+          </body>
+          </html>
+        `);
         previewWin.document.close();
     }
 }
@@ -467,6 +499,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll(".toolbar").forEach(tb => tb.style.display = "none");
             const target = document.getElementById(btn.dataset.tab);
             if (target) target.style.display = "flex";
+            if (editor && editor.editor) editor.editor.focus();
         });
     });
 
