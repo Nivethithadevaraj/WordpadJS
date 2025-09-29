@@ -17,104 +17,116 @@
         <button class="tab-btn" data-tab="export">Export</button>
         <button class="tab-btn" data-tab="findreplace">Find & Replace</button>
         <button id="modeToggle" class="mode-btn" aria-pressed="false">🌙 Dark</button>
-    </div>
-
-    <!-- File Toolbar -->
-    <div class="toolbar" id="file">
-        <button onclick="fileManager.newDoc()">New</button>
-        <button onclick="fileManager.openFile()">Open</button>
-        <button onclick="fileManager.toggleAutoSave()">Toggle AutoSave</button>
-        <span id="autosaveStatus">AutoSave: OFF</span>
-        <span id="currentFile" style="margin-left:20px;font-weight:bold;">Current File: Untitled</span>
-    </div>
-
-    <!-- Home Toolbar -->
-    <div class="toolbar" id="home" style="display:flex;">
-        <select onchange="editor.execCmd('fontName', this.value)">
-            <option value="Calibri">Calibri</option>
-            <option value="Arial">Arial</option>
-            <option value="Times New Roman">Times New Roman</option>
-            <option value="Georgia">Georgia</option>
-            <option value="Verdana">Verdana</option>
-        </select>
-        <select onchange="editor.execCmd('fontSize', this.value)">
-            <option value="3">12</option>
-            <option value="4">14</option>
-            <option value="5">18</option>
-            <option value="6">24</option>
-            <option value="7">36</option>
-        </select>
-        <select onchange="editor.formatBlock(this.value)">
-            <option value="P">Normal</option>
-            <option value="H1">Heading 1</option>
-            <option value="H2">Heading 2</option>
-        </select>
-        <button id="btn-bold" onclick="editor.execCmd('bold')"><b>B</b></button>
-        <button id="btn-italic" onclick="editor.execCmd('italic')"><i>I</i></button>
-        <button id="btn-underline" onclick="editor.execCmd('underline')"><u>U</u></button>
-
-        <input type="color" onchange="editor.execCmd('foreColor', this.value)">
-        <input type="color" onchange="editor.execCmd('hiliteColor', this.value)">
-        <button id="btn-justifyLeft" onclick="editor.execCmd('justifyLeft')">Left</button>
-        <button id="btn-justifyCenter" onclick="editor.execCmd('justifyCenter')">Center</button>
-        <button id="btn-justifyRight" onclick="editor.execCmd('justifyRight')">Right</button>
-        <button id="btn-bulleted" onclick="editor.execCmd('insertUnorderedList')">• Bulleted</button>
-        <button id="btn-numbered" onclick="editor.execCmd('insertOrderedList')">1. Numbered</button>
-
-    </div>
-
-    <!-- Insert Toolbar -->
-    <div class="toolbar" id="insert">
-        <button onclick="inserter.insertLink()">Insert Link</button>
-        <button onclick="inserter.insertImage()">Insert Image (File)</button>
-        <button onclick="imageHandler.cropImage()">✂️ Crop</button>
-        <button onclick="inserter.insertImageURL()">Insert Image (URL)</button>
-        <button onclick="inserter.insertTable()">Insert Table</button>
-        <div id="table-tools" class="table-controls" style="display:none;">
-            <button title="Add Row" onclick="inserter.addRow()">➕↔</button>
-            <button title="Add Col" onclick="inserter.addColumn()">➕↕</button>
-            <button title="Del Row" onclick="inserter.removeRow()">❌↔</button>
-            <button title="Del Col" onclick="inserter.removeColumn()">❌↕</button>
-            <button title="Del Table" onclick="inserter.removeTable()">🗑️</button>
+        <div style="margin-left:auto; display:flex; gap:6px;">
+            <button onclick="historyManager.undo()">↩️ Undo</button>
+            <button onclick="historyManager.redo()">↪️ Redo</button>
         </div>
 
+        <!-- File Toolbar -->
+        <div class="toolbar" id="file">
+            <button onclick="fileManager.newDoc()">New</button>
+            <button onclick="fileManager.openFile()">Open</button>
+            <button onclick="fileManager.toggleAutoSave()">Toggle AutoSave</button>
+            <span id="autosaveStatus">AutoSave: OFF</span>
+            <span id="currentFile" style="margin-left:20px;font-weight:bold;">Current File: Untitled</span>
+        </div>
 
-    </div>
+        <!-- Home Toolbar -->
+        <div class="toolbar" id="home" style="display:flex;">
+            <select onchange="editor.execCmd('fontName', this.value)">
+                <option value="Calibri">Calibri</option>
+                <option value="Arial">Arial</option>
+                <option value="Times New Roman">Times New Roman</option>
+                <option value="Georgia">Georgia</option>
+                <option value="Verdana">Verdana</option>
+            </select>
+            <select onchange="editor.execCmd('fontSize', this.value)">
+                <option value="3">12</option>
+                <option value="4">14</option>
+                <option value="5">18</option>
+                <option value="6">24</option>
+                <option value="7">36</option>
+            </select>
+            <select onchange="editor.formatBlock(this.value)">
+                <option value="P">Normal</option>
+                <option value="H1">Heading 1</option>
+                <option value="H2">Heading 2</option>
+            </select>
+            <button id="btn-bold" onclick="editor.execCmd('bold')"><b>B</b></button>
+            <button id="btn-italic" onclick="editor.execCmd('italic')"><i>I</i></button>
+            <button id="btn-underline" onclick="editor.execCmd('underline')"><u>U</u></button>
 
-    <!-- Document Ops Toolbar -->
-    <div class="toolbar" id="docops">
-        <button onclick="viewer.clearFormatting()">Clear Formatting</button>
-        <button onclick="viewer.resetContent()">Reset Document</button>
-        <button onclick="viewer.copyPlain()">Copy Plain Text</button>
-        <button onclick="viewer.copyHTML()">Copy HTML</button>
-        <button onclick="viewer.previewDoc()">Preview</button>
-    </div>
+            <input type="color" onchange="editor.execCmd('foreColor', this.value)">
+            <input type="color" onchange="editor.execCmd('hiliteColor', this.value)">
+            <button id="btn-justifyLeft" onclick="editor.execCmd('justifyLeft')">Left</button>
+            <button id="btn-justifyCenter" onclick="editor.execCmd('justifyCenter')">Center</button>
+            <button id="btn-justifyRight" onclick="editor.execCmd('justifyRight')">Right</button>
+            <button id="btn-bulleted" onclick="editor.execCmd('insertUnorderedList')">• Bulleted</button>
+            <button id="btn-numbered" onclick="editor.execCmd('insertOrderedList')">1. Numbered</button>
 
-    <!-- Export Toolbar -->
-    <div class="toolbar" id="export">
-        <input id="docTitle" placeholder="Title">
-        <input id="docAuthor" placeholder="Author">
-        <button onclick="exporter.exportWord()">Export .doc</button>
-        <button onclick="exporter.exportPDF()">Export PDF</button>
-    </div>
+        </div>
 
-    <!-- Find & Replace Toolbar -->
-    <div class="toolbar" id="findreplace">
-        <input type="text" id="findText" placeholder="Find text">
-        <input type="text" id="replaceText" placeholder="Replace with">
-        <button id="btn-find-next" onclick="finder.findNext()">Find Next</button>
-        <button id="btn-replace" onclick="finder.replace()">Replace</button>
-        <button id="btn-replace-all" onclick="finder.replaceAll()">Replace All</button>
-        <button id="btn-clear" onclick="finder.clearHighlights()">Clear</button>
-        <span id="findStatus" class="find-status" aria-live="polite"></span>
-    </div>
+        <!-- Insert Toolbar -->
+        <div class="toolbar" id="insert" style="gap:12px; flex-wrap:wrap;">
 
-    <!-- Editor Area -->
-    <div class="page">
-        <div id="editor" contenteditable="true"></div>
-    </div>
-    <script src="script.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+            <!-- Link -->
+            <input type="text" id="linkUrl" placeholder="Link" style="width:120px;">
+            <button onclick="inserter.insertLink()">🔗</button>
+
+            <!-- Image -->
+            <button onclick="inserter.insertImage()">📁 Img</button>
+            <input type="text" id="imgUrl" placeholder="Image URL" style="width:120px;">
+            <button onclick="inserter.insertImageURL()">🌐</button>
+
+            <!-- Table -->
+            <input type="number" id="tableRows" min="1" placeholder="R" style="width:40px;">
+            <input type="number" id="tableCols" min="1" placeholder="C" style="width:40px;">
+            <button onclick="inserter.insertTable()">📑</button>
+
+            <!-- Table Tools -->
+            <div id="table-tools" class="table-controls" style="display:none;">
+                <button title="Add Row" onclick="inserter.addRow()">➕↔</button>
+                <button title="Add Col" onclick="inserter.addColumn()">➕↕</button>
+                <button title="Del Row" onclick="inserter.removeRow()">❌↔</button>
+                <button title="Del Col" onclick="inserter.removeColumn()">❌↕</button>
+                <button title="Del Table" onclick="inserter.removeTable()">🗑️</button>
+            </div>
+        </div>
+
+        <!-- Document Ops Toolbar -->
+        <div class="toolbar" id="docops">
+            <button onclick="viewer.clearFormatting()">Clear Formatting</button>
+            <button onclick="viewer.resetContent()">Reset Document</button>
+            <button onclick="viewer.copyPlain()">Copy Plain Text</button>
+            <button onclick="viewer.copyHTML()">Copy HTML</button>
+            <button onclick="viewer.previewDoc()">Preview</button>
+        </div>
+
+        <!-- Export Toolbar -->
+        <div class="toolbar" id="export">
+            <input id="docTitle" placeholder="Title">
+            <input id="docAuthor" placeholder="Author">
+            <button onclick="exporter.exportWord()">Export .doc</button>
+            <button onclick="exporter.exportPDF()">Export PDF</button>
+        </div>
+
+        <!-- Find & Replace Toolbar -->
+        <div class="toolbar" id="findreplace">
+            <input type="text" id="findText" placeholder="Find text">
+            <input type="text" id="replaceText" placeholder="Replace with">
+            <button id="btn-find-next" onclick="finder.findNext()">Find Next</button>
+            <button id="btn-replace" onclick="finder.replace()">Replace</button>
+            <button id="btn-replace-all" onclick="finder.replaceAll()">Replace All</button>
+            <button id="btn-clear" onclick="finder.clearHighlights()">Clear</button>
+            <span id="findStatus" class="find-status" aria-live="polite"></span>
+        </div>
+
+        <!-- Editor Area -->
+        <div class="page">
+            <div id="editor" contenteditable="true"></div>
+        </div>
+        <script src="script.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </body>
 
 </html>

@@ -9,11 +9,13 @@ class Editor {
         document.execCommand(command, false, value);
         this.editor.focus();
         this.updateActiveStates();
+        if (window.historyManager) historyManager.save();   // track formatting & commands
     }
     formatBlock(tag) {
         document.execCommand("formatBlock", false, tag);
         this.editor.focus();
         this.updateActiveStates();
+        if (window.historyManager) historyManager.save();   // track headings etc.
     }
     updateActiveStates() {
         const states = {
@@ -44,13 +46,116 @@ class Editor {
             }
         }
     }
+}
 
+// History Manager (MutationObserver + debounced saves + undo/redo that restores HTML)
+class HistoryManager {
+    constructor(editorId, options = {}) {
+        this.editor = document.getElementById(editorId);
+        this.stack = [];
+        this.index = -1;
+        this.max = options.max || 200;           // keep last N states
+        this.debounceMs = options.debounceMs || 150;
+        this._debounceTimer = null;
+        this._isRestoring = false;
+
+        // MutationObserver to catch changes (insertImage via DOM append, img.src changes, attributes, moves)
+        this.observeConfig = { childList: true, subtree: true, attributes: true, characterData: true };
+        this.observer = new MutationObserver((mutations) => this._onMutations(mutations));
+        this.observer.observe(this.editor, this.observeConfig);
+
+        // Also listen to input for typing
+        this.editor.addEventListener("input", () => this.save());
+
+        // initial snapshot
+        this.save();
+    }
+
+    _onMutations(mutations) {
+        // ignore if we are restoring (undo/redo)
+        if (this._isRestoring) return;
+        if (this._debounceTimer) clearTimeout(this._debounceTimer);
+        this._debounceTimer = setTimeout(() => this.save(), this.debounceMs);
+    }
+
+    save() {
+        if (this._isRestoring) return; // don't save while restoring
+        const content = this.editor.innerHTML;
+        // avoid duplicate consecutive states
+        if (this.index >= 0 && this.stack[this.index] === content) return;
+        // cut future if we've undone some steps
+        this.stack = this.stack.slice(0, this.index + 1);
+        this.stack.push(content);
+        // limit size
+        if (this.stack.length > this.max) {
+            const excess = this.stack.length - this.max;
+            this.stack.splice(0, excess);
+        }
+        this.index = this.stack.length - 1;
+    }
+
+    undo() {
+        if (this.index <= 0) {
+            // nothing to undo
+            return;
+        }
+        // prevent observer from capturing our innerHTML set
+        this._isRestoring = true;
+        this.observer.disconnect();
+
+        // clear any active wrappers so we restore clean DOM (ObjectHandler will recreate wrappers on click)
+        if (window.objectHandler && typeof objectHandler.clearWrapper === 'function') {
+            try { objectHandler.clearWrapper(); } catch (e) { /* ignore */ }
+        }
+
+        this.index--;
+        this.editor.innerHTML = this.stack[this.index];
+
+        // reconnect observer and finish
+        this.observer.observe(this.editor, this.observeConfig);
+        this._isRestoring = false;
+
+        // refresh UI states and focus
+        if (window.editor) {
+            try { editor.updateActiveStates(); } catch (e) { /* ignore */ }
+            try { editor.editor.focus(); } catch (e) { /* ignore */ }
+        }
+    }
+
+    redo() {
+        if (this.index >= this.stack.length - 1) return;
+        this._isRestoring = true;
+        this.observer.disconnect();
+
+        if (window.objectHandler && typeof objectHandler.clearWrapper === 'function') {
+            try { objectHandler.clearWrapper(); } catch (e) { /* ignore */ }
+        }
+
+        this.index++;
+        this.editor.innerHTML = this.stack[this.index];
+
+        this.observer.observe(this.editor, this.observeConfig);
+        this._isRestoring = false;
+
+        if (window.editor) {
+            try { editor.updateActiveStates(); } catch (e) { /* ignore */ }
+            try { editor.editor.focus(); } catch (e) { /* ignore */ }
+        }
+    }
 }
 
 //Inserter
 class Inserter {
     constructor(editorId) { this.editor = document.getElementById(editorId); }
-    insertLink() { const url = prompt("Enter URL:"); if (url) document.execCommand("createLink", false, url); }
+
+    insertLink() {
+        const url = document.getElementById("linkUrl")?.value.trim();
+        if (url) {
+            document.execCommand("createLink", false, url);
+            if (window.historyManager) historyManager.save();
+        }
+    }
+
     insertImage() {
         const input = document.createElement("input"); input.type = "file"; input.accept = "image/*";
         input.onchange = e => {
@@ -61,23 +166,28 @@ class Inserter {
                 img.src = ev.target.result;
                 img.style.maxWidth = "100%";
                 document.getElementById("editor").appendChild(img);
+                if (window.historyManager) historyManager.save();
             };
             r.readAsDataURL(file);
         };
         input.click();
     }
+
     insertImageURL() {
-        const url = prompt("Enter image URL:");
-        if (url) {
-            const img = document.createElement("img");
-            img.src = url;
-            img.style.maxWidth = "100%";
-            document.getElementById("editor").appendChild(img);
-        }
+        const url = document.getElementById("imgUrl")?.value.trim();
+        if (!url) return;
+        const img = document.createElement("img");
+        img.src = url;
+        img.style.maxWidth = "100%";
+        document.getElementById("editor").appendChild(img);
+        if (window.historyManager) historyManager.save();
     }
+
     insertTable() {
-        const rows = parseInt(prompt("Rows:"), 10); const cols = parseInt(prompt("Cols:"), 10);
+        const rows = parseInt(document.getElementById("tableRows")?.value, 10);
+        const cols = parseInt(document.getElementById("tableCols")?.value, 10);
         if (!rows || !cols) return;
+
         let html = "<table>";
         for (let r = 0; r < rows; r++) {
             html += "<tr>";
@@ -86,7 +196,9 @@ class Inserter {
         }
         html += "</table>";
         document.execCommand("insertHTML", false, html);
+        if (window.historyManager) historyManager.save();
     }
+
     addRow() {
         const cell = this.getSelectedCell();
         if (!cell) return;
@@ -94,6 +206,7 @@ class Inserter {
         const newRow = row.cloneNode(true);
         newRow.querySelectorAll("td").forEach(td => td.textContent = "");
         row.parentNode.insertBefore(newRow, row.nextSibling);
+        if (window.historyManager) historyManager.save();
     }
     addColumn() {
         const cell = this.getSelectedCell();
@@ -104,12 +217,14 @@ class Inserter {
             const newCell = row.insertCell(colIndex + 1);
             newCell.textContent = "";
         });
+        if (window.historyManager) historyManager.save();
     }
     removeRow() {
         const cell = this.getSelectedCell();
         if (!cell) return;
         const row = cell.parentNode;
         row.parentNode.removeChild(row);
+        if (window.historyManager) historyManager.save();
     }
     removeColumn() {
         const cell = this.getSelectedCell();
@@ -119,12 +234,14 @@ class Inserter {
         Array.from(table.rows).forEach(row => {
             if (row.cells[colIndex]) row.deleteCell(colIndex);
         });
+        if (window.historyManager) historyManager.save();
     }
     removeTable() {
         const cell = this.getSelectedCell();
         if (!cell) return;
         const table = cell.closest("table");
         table.parentNode.removeChild(table);
+        if (window.historyManager) historyManager.save();
     }
     getSelectedCell() {
         const sel = window.getSelection();
@@ -136,127 +253,131 @@ class Inserter {
         return node;
     }
 }
-// Object Handler
 
+// Object Handler
 class ObjectHandler {
     constructor(editorId) {
         this.editor = document.getElementById(editorId);
-        this.lastClicked = null;
-        this.draggedElement = null;
+        this.activeWrapper = null;
         this.init();
     }
-
     init() {
         this.editor.addEventListener("click", e => {
             if (e.target.tagName === "IMG" || e.target.tagName === "TABLE") {
-                this.makeResizableDraggable(e.target);
-                this.lastClicked = e.target;
+                this.showWrapper(e.target);
+                e.stopPropagation();
+            } else {
+                this.clearWrapper();
+            }
+        });
+        document.addEventListener("click", e => {
+            if (!this.editor.contains(e.target)) {
+                this.clearWrapper();
             }
         });
     }
-
-    makeResizableDraggable(el) {
-        if (el.parentNode.classList.contains("obj-wrapper")) return;
-
+    showWrapper(el) {
+        this.clearWrapper();
         const wrapper = document.createElement("div");
         wrapper.className = "obj-wrapper";
         wrapper.style.position = "absolute";
         wrapper.style.left = el.offsetLeft + "px";
         wrapper.style.top = el.offsetTop + "px";
+        wrapper.style.width = el.offsetWidth + "px";
+        wrapper.style.height = el.offsetHeight + "px";
         wrapper.style.display = "inline-block";
-        wrapper.style.cursor = "move";
-
         this.editor.style.position = "relative";
         this.editor.appendChild(wrapper);
         wrapper.appendChild(el);
 
-        wrapper.onmousedown = e => {
-            if (e.target.classList.contains("resize-handle")) return;
+        if (el.tagName === "IMG" || el.tagName === "TABLE") {
+            const moveHandle = document.createElement("div");
+            moveHandle.className = "move-handle";
+            moveHandle.style.width = "12px";
+            moveHandle.style.height = "12px";
+            moveHandle.style.background = "blue";
+            moveHandle.style.position = "absolute";
+            moveHandle.style.top = "-6px";
+            moveHandle.style.left = "-6px";
+            moveHandle.style.cursor = "move";
+            wrapper.appendChild(moveHandle);
+
+            const resizeHandle = document.createElement("div");
+            resizeHandle.className = "resize-handle";
+            resizeHandle.style.width = "12px";
+            resizeHandle.style.height = "12px";
+            resizeHandle.style.background = "blue";
+            resizeHandle.style.position = "absolute";
+            resizeHandle.style.bottom = "-6px";
+            resizeHandle.style.right = "-6px";
+            resizeHandle.style.cursor = "se-resize";
+            wrapper.appendChild(resizeHandle);
+
+            this.attachMove(wrapper, moveHandle);
+            this.attachResize(wrapper, resizeHandle, el);
+        }
+        this.activeWrapper = wrapper;
+        if (window.historyManager) historyManager.save();
+    }
+    attachMove(wrapper, handle) {
+        handle.addEventListener("mousedown", e => {
             e.preventDefault();
             const shiftX = e.clientX - wrapper.getBoundingClientRect().left;
             const shiftY = e.clientY - wrapper.getBoundingClientRect().top;
-
+            const editorRect = this.editor.getBoundingClientRect();
             const moveAt = (pageX, pageY) => {
-                const editorRect = this.editor.getBoundingClientRect();
                 let newLeft = pageX - editorRect.left - shiftX;
                 let newTop = pageY - editorRect.top - shiftY;
-
                 newLeft = Math.max(0, Math.min(newLeft, editorRect.width - wrapper.offsetWidth));
                 newTop = Math.max(0, Math.min(newTop, editorRect.height - wrapper.offsetHeight));
-
                 wrapper.style.left = newLeft + "px";
                 wrapper.style.top = newTop + "px";
             };
-
             const onMouseMove = e2 => moveAt(e2.pageX, e2.pageY);
-
             document.addEventListener("mousemove", onMouseMove);
             document.addEventListener("mouseup", () => {
                 document.removeEventListener("mousemove", onMouseMove);
+                if (window.historyManager) historyManager.save();
             }, { once: true });
-
-            const onClickOutside = e => {
-                if (this.cropping && e.target !== img && e.target.id !== "crop-selection") {
-                    if (editor.contains(selectionBox)) editor.removeChild(selectionBox);
-                    this.cropping = false;
-                    document.removeEventListener("click", onClickOutside);
-                }
-            };
-            document.addEventListener("click", onClickOutside);
-
-        };
-
-        wrapper.ondragstart = () => false;
-
-        ["nw", "ne", "sw", "se"].forEach(corner => {
-            const handle = document.createElement("div");
-            handle.className = "resize-handle";
-            handle.style.width = "10px";
-            handle.style.height = "10px";
-            handle.style.background = "blue";
-            handle.style.position = "absolute";
-            handle.style.cursor = corner + "-resize";
-
-            if (corner === "nw") { handle.style.left = "0"; handle.style.top = "0"; }
-            if (corner === "ne") { handle.style.right = "0"; handle.style.top = "0"; }
-            if (corner === "sw") { handle.style.left = "0"; handle.style.bottom = "0"; }
-            if (corner === "se") { handle.style.right = "0"; handle.style.bottom = "0"; }
-
-            wrapper.appendChild(handle);
-
-            handle.addEventListener("mousedown", e => {
-                e.stopPropagation();
-                const startX = e.clientX;
-                const startY = e.clientY;
-                const startW = el.offsetWidth;
-                const startH = el.offsetHeight;
-
-                const onMouseMove = e2 => {
-                    let newW = startW + (e2.clientX - startX) * (corner.includes("e") ? 1 : -1);
-                    let newH = startH + (e2.clientY - startY) * (corner.includes("s") ? 1 : -1);
-                    if (newW > 30 && newH > 30) {
-                        el.style.width = newW + "px";
-                        el.style.height = newH + "px";
-                    }
-                };
-                table.style.width = newW + "px";
-                table.style.height = newH + "px";
-                image.style.width = newW + "px";
-                image.style.height = newH + "px";
-
-
-                const onMouseUp = () => {
-                    document.removeEventListener("mousemove", onMouseMove);
-                    document.removeEventListener("mouseup", onMouseUp);
-                };
-                document.addEventListener("mousemove", onMouseMove);
-                document.addEventListener("mouseup", onMouseUp);
-            });
         });
+    }
+    attachResize(wrapper, handle, el) {
+        handle.addEventListener("mousedown", e => {
+            e.stopPropagation();
+            const startX = e.clientX;
+            const startY = e.clientY;
+            const startW = el.offsetWidth;
+            const startH = el.offsetHeight;
+            const onMouseMove = e2 => {
+                const newW = Math.max(30, startW + (e2.clientX - startX));
+                const newH = Math.max(30, startH + (e2.clientY - startY));
+                el.style.width = newW + "px";
+                el.style.height = newH + "px";
+                wrapper.style.width = newW + "px";
+                wrapper.style.height = newH + "px";
+            };
+            const onMouseUp = () => {
+                document.removeEventListener("mousemove", onMouseMove);
+                document.removeEventListener("mouseup", onMouseUp);
+                if (window.historyManager) historyManager.save();
+            };
+            document.addEventListener("mousemove", onMouseMove);
+            document.addEventListener("mouseup", onMouseUp);
+        });
+    }
+    clearWrapper() {
+        if (this.activeWrapper) {
+            const el = this.activeWrapper.querySelector("img, table");
+            if (el) {
+                this.editor.insertBefore(el, this.activeWrapper);
+            }
+            this.activeWrapper.remove();
+            this.activeWrapper = null;
+        }
     }
 }
 
-//Viewer
+// Viewer
 class Viewer {
     constructor(editorId) {
         this.editor = document.getElementById(editorId);
@@ -270,21 +391,19 @@ class Viewer {
         div.appendChild(content);
         const plain = div.textContent || div.innerText || "";
         document.execCommand("insertText", false, plain);
+        if (window.historyManager) historyManager.save();
     }
     resetContent() {
-        if (confirm("Reset?")) this.editor.innerHTML = "";
+        this.editor.innerHTML = ""; 
+        if (window.historyManager) historyManager.save();
     }
     copyPlain() {
         const text = this.editor.innerText;
-        navigator.clipboard.writeText(text).then(() => {
-            alert("Copied plain text!");
-        });
+        navigator.clipboard.writeText(text);
     }
     copyHTML() {
         const html = this.editor.innerHTML;
-        navigator.clipboard.writeText(html).then(() => {
-            alert("Copied HTML!");
-        });
+        navigator.clipboard.writeText(html);
     }
     previewDoc() {
         const title = document.getElementById("docTitle")?.value || "Preview";
@@ -310,14 +429,12 @@ class Viewer {
     }
 }
 
-//Exporter 
+// Exporter 
 class Exporter {
     constructor(editorId) { this.editor = document.getElementById(editorId); }
     getMetaData() {
-        let title = document.getElementById("docTitle").value.trim();
-        let author = document.getElementById("docAuthor").value.trim();
-        if (!title) title = prompt("Enter document title:", "Untitled") || "Untitled";
-        if (!author) author = prompt("Enter author name:", "Unknown") || "Unknown";
+        let title = document.getElementById("docTitle").value.trim() || "Untitled";
+        let author = document.getElementById("docAuthor").value.trim() || "Unknown";
         return { title, author };
     }
     exportWord() {
@@ -332,8 +449,6 @@ class Exporter {
   </style>
   ${this.editor.innerHTML}
 `;
-
-
         const blob = new Blob([content], { type: "application/msword" });
         const a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
@@ -353,8 +468,6 @@ class Exporter {
   </style>
   ${this.editor.innerHTML}
 `;
-
-
         const opt = {
             margin: 10, filename: title + ".pdf",
             image: { type: 'jpeg', quality: 0.98 },
@@ -382,12 +495,11 @@ class FileManager {
         if (label) label.textContent = "Current File: " + this.fileName;
     }
     newDoc() {
-        if (confirm("Clear the document?")) {
-            this.editor.innerHTML = "";
-            this.fileHandle = null;
-            this.fileName = "Untitled Document";
-            this.updateTitle();
-        }
+        this.editor.innerHTML = "";
+        this.fileHandle = null;
+        this.fileName = "Untitled Document";
+        this.updateTitle();
+        if (window.historyManager) historyManager.save();
     }
     async saveFile() {
         try {
@@ -540,7 +652,6 @@ class Finder {
             this.lastQuery = q;
             this.lastIndex = 0;
 
-            // highlight all matches
             const regex = new RegExp(q, "gi");
             this.getTextNodes().forEach(node => {
                 const frag = document.createDocumentFragment();
@@ -598,6 +709,7 @@ class Finder {
         this.lastQuery = q;
         this.clearHighlights();
         this.showStatus("Replaced one");
+        if (window.historyManager) historyManager.save();
     }
 
     replaceAll() {
@@ -620,6 +732,7 @@ class Finder {
         this.lastIndex = 0;
         this.lastQuery = "";
         this.showStatus(total ? `Replaced ${total} occurrence(s)` : "No matches to replace");
+        if (window.historyManager) historyManager.save();
     }
 }
 
@@ -631,6 +744,8 @@ document.addEventListener('DOMContentLoaded', () => {
     window.exporter = new Exporter("editor");
     window.fileManager = new FileManager("editor");
     window.finder = new Finder("editor");
+    window.objectHandler = new ObjectHandler("editor");
+    window.historyManager = new HistoryManager("editor");
 
     if (Editor && Editor.editor) Editor.editor.focus();
 
@@ -684,5 +799,16 @@ document.addEventListener('DOMContentLoaded', () => {
             tools.style.display = node ? "inline-flex" : "none";
         }
     });
-    window.objectHandler = new ObjectHandler("editor");
+
+    // Keyboard shortcuts
+    document.addEventListener("keydown", e => {
+        if (e.ctrlKey && e.key.toLowerCase() === "z") {
+            e.preventDefault();
+            historyManager.undo();
+        }
+        if (e.ctrlKey && (e.key.toLowerCase() === "y" || (e.shiftKey && e.key.toLowerCase() === "z"))) {
+            e.preventDefault();
+            historyManager.redo();
+        }
+    });
 });
