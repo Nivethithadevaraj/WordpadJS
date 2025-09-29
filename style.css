@@ -222,10 +222,10 @@ button.active-format {
 }
 
 .editor-page {
-  width: 794px;        /* A4 width at 96dpi */
-  min-height: 1123px;  /* A4 height */
-  margin: 40px auto;   /* outer margin on screen */
-  padding: 40px;       /* content padding */
+  width: 794px;        
+  min-height: 1123px;  
+  margin: 40px auto;   
+  padding: 40px;       
   background: var(--editor-bg);
   border: 1px solid #ccc;
   box-shadow: 0 0 8px var(--shadow);
@@ -238,7 +238,4 @@ button.active-format {
   margin: 0 !important;
   box-shadow: none !important;
   border: none !important;
-  padding: 0 !important;
 }
-
-

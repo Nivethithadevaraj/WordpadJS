@@ -476,130 +476,104 @@ class Viewer {
 
 // Exporter 
 class Exporter {
-    constructor(editorId) { this.editor = document.getElementById(editorId); }
+    constructor(editorId) {
+        this.editor = document.getElementById(editorId);
+    }
 
     getMetaData() {
         let title = document.getElementById("docTitle").value.trim();
         let author = document.getElementById("docAuthor").value.trim();
         const status = document.getElementById("exportStatus");
 
-        if (!title || !author) {
+        if (!title) {
             if (status) {
-                status.textContent = "⚠️ Please enter Title and Author before exporting.";
+                status.textContent = "⚠️ Please enter a Title before exporting.";
                 status.style.color = "red";
             }
             throw new Error("Missing metadata");
         }
 
-        if (status) {
-            status.textContent = "";
-        }
-
+        if (status) status.textContent = "";
         return { title, author };
     }
 
     clearMetaInputs() {
         const t = document.getElementById("docTitle");
-        const a = document.getElementById("docAuthor");
         if (t) t.value = "";
+        const a = document.getElementById("docAuthor");
         if (a) a.value = "";
     }
-   exportWord() {
-    try {
-        const { title, author } = this.getMetaData();
-        const pages = Array.from(document.querySelectorAll(".editor-page"));
 
-        // temporarily strip shadows/margins
-        pages.forEach(p => p.classList.add("exporting"));
+    exportWord() {
+        try {
+            const { title } = this.getMetaData();
+            const pages = Array.from(document.querySelectorAll(".editor-page"));
 
-        const htmlPages = pages.map(p => `
-            <div style="page-break-after: always; min-height:1123px; width:794px;">
-                ${p.innerHTML}
-            </div>
-        `).join('');
+            pages.forEach(p => p.classList.add("exporting"));
 
-        const content = `
-  <html xmlns:o='urn:schemas-microsoft-com:office:office'
-        xmlns:w='urn:schemas-microsoft-com:office:word'
-        xmlns='http://www.w3.org/TR/REC-html40'>
-  <head>
-    <meta charset="utf-8">
-    <title>${title}</title>
-   <style>
-      table { border-collapse: collapse; }
-      td, th { border: 1px solid #000; padding: 5px; }
-      img { max-width: 100%; height: auto; }
-   </style>
-  </head>
-  <body>
-    ${htmlPages}
-  </body>
-  </html>
-`;
-        const blob = new Blob([content], { type: "application/msword" });
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = title + ".doc";
-        a.click();
+            const htmlPages = pages.map((p, idx) => `
+                <div style="page-break-after:${idx < pages.length - 1 ? 'always' : 'auto'};">
+                    ${p.innerHTML}
+                </div>
+            `).join('');
 
-        // restore normal styles
-        pages.forEach(p => p.classList.remove("exporting"));
-        this.clearMetaInputs();
-    } catch (e) { }
-}
+            const content = `
+              <html xmlns:o='urn:schemas-microsoft-com:office:office'
+                    xmlns:w='urn:schemas-microsoft-com:office:word'
+                    xmlns='http://www.w3.org/TR/REC-html40'>
+              <head>
+                <meta charset="utf-8">
+                <title>${title}</title>
+                <style>
+                  body { font-family: Calibri, Arial, sans-serif; }
+                  table { border-collapse: collapse; }
+                  td, th { border: 1px solid #000; padding: 5px; }
+                  img { max-width: 100%; height: auto; }
+                </style>
+              </head>
+              <body>${htmlPages}</body>
+              </html>
+            `;
 
-exportPDF() {
-    try {
-        const { title, author } = this.getMetaData();
-        const pages = Array.from(document.querySelectorAll(".editor-page"));
+            const blob = new Blob([content], { type: "application/msword" });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = title + ".doc";
+            a.click();
 
-        // temporarily strip shadows/margins
-        pages.forEach(p => p.classList.add("exporting"));
+            pages.forEach(p => p.classList.remove("exporting"));
+            this.clearMetaInputs();
+        } catch (e) { }
+    }
 
-        const wrapper = document.createElement("div");
-        wrapper.innerHTML = pages.map(p => `
-            <div style="
-                page-break-after: always;
-                min-height:1123px;
-                width:794px;
-                margin:0;
-                padding:40px;
-            ">
-                ${p.innerHTML}
-            </div>
-        `).join('');
+    exportPDF() {
+        try {
+            const { title } = this.getMetaData();
+            const pages = Array.from(document.querySelectorAll(".editor-page"));
 
-        const opt = {
-            margin: [20, 20, 20, 20],
-            filename: title + ".pdf",
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true },
-            jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' }
-        };
+            pages.forEach(p => p.classList.add("exporting"));
 
-        html2pdf()
-            .set(opt)
-            .from(wrapper)
-            .toPdf()
-            .get('pdf')
-            .then(pdf => {
-                pdf.setProperties({
-                    title,
-                    subject: "WordPad Export",
-                    author,
-                    keywords: "WordPad, Export, PDF",
-                    creator: "Custom WordPad Clone"
-                });
-            })
-            .save();
+            const wrapper = document.createElement("div");
+            wrapper.innerHTML = pages.map((p, idx) => `
+                <div style="page-break-after:${idx < pages.length - 1 ? 'always' : 'auto'}; padding:20px;">
+                    ${p.innerHTML}
+                </div>
+            `).join('');
 
-        // restore normal styles
-        pages.forEach(p => p.classList.remove("exporting"));
-        this.clearMetaInputs();
-    } catch (e) { }
-}
+            const opt = {
+                margin: 10,
+                filename: title + ".pdf",
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' }
+            };
 
+            html2pdf().set(opt).from(wrapper).save();
 
+            pages.forEach(p => p.classList.remove("exporting"));
+            this.clearMetaInputs();
+        } catch (e) { }
+    }
 }
 
 // FileManager
