@@ -136,149 +136,124 @@ class Inserter {
         return node;
     }
 }
-// Image Handler
-class ImageHandler {
+// Object Handler
+
+class ObjectHandler {
     constructor(editorId) {
         this.editor = document.getElementById(editorId);
-        this.lastClickedImage = null;
+        this.lastClicked = null;
+        this.draggedElement = null;
         this.init();
     }
 
     init() {
         this.editor.addEventListener("click", e => {
-            if (e.target.tagName === "IMG") {
-                this.lastClickedImage = e.target;
+            if (e.target.tagName === "IMG" || e.target.tagName === "TABLE") {
                 this.makeResizableDraggable(e.target);
-                const imgTools = document.getElementById("image-tools");
-                if (imgTools) imgTools.style.display = "inline-flex";
-            } else {
-                const imgTools = document.getElementById("image-tools");
-                if (imgTools) imgTools.style.display = "none";
+                this.lastClicked = e.target;
             }
         });
     }
 
-    makeResizableDraggable(img) {
-        if (!img.parentNode.classList.contains("img-wrapper")) {
-            const wrapper = document.createElement("div");
-            wrapper.className = "img-wrapper";
-            wrapper.style.position = "absolute";
-            wrapper.style.left = img.offsetLeft + "px";
-            wrapper.style.top = img.offsetTop + "px";
-            wrapper.style.display = "inline-block";
-            wrapper.style.cursor = "move";
+    makeResizableDraggable(el) {
+        if (el.parentNode.classList.contains("obj-wrapper")) return;
 
-            this.editor.style.position = "relative"; 
-            this.editor.appendChild(wrapper);
-            wrapper.appendChild(img);
+        const wrapper = document.createElement("div");
+        wrapper.className = "obj-wrapper";
+        wrapper.style.position = "absolute";
+        wrapper.style.left = el.offsetLeft + "px";
+        wrapper.style.top = el.offsetTop + "px";
+        wrapper.style.display = "inline-block";
+        wrapper.style.cursor = "move";
 
-            wrapper.onmousedown = e => {
-                if (e.target.classList.contains("resize-handle")) return;
-                e.preventDefault();
-                const shiftX = e.clientX - wrapper.getBoundingClientRect().left;
-                const shiftY = e.clientY - wrapper.getBoundingClientRect().top;
+        this.editor.style.position = "relative";
+        this.editor.appendChild(wrapper);
+        wrapper.appendChild(el);
 
-                const moveAt = (pageX, pageY) => {
-                    const editorRect = this.editor.getBoundingClientRect();
-                    let newLeft = pageX - editorRect.left - shiftX;
-                    let newTop = pageY - editorRect.top - shiftY;
+        wrapper.onmousedown = e => {
+            if (e.target.classList.contains("resize-handle")) return;
+            e.preventDefault();
+            const shiftX = e.clientX - wrapper.getBoundingClientRect().left;
+            const shiftY = e.clientY - wrapper.getBoundingClientRect().top;
 
-                    newLeft = Math.max(0, Math.min(newLeft, editorRect.width - wrapper.offsetWidth));
-                    newTop = Math.max(0, Math.min(newTop, editorRect.height - wrapper.offsetHeight));
+            const moveAt = (pageX, pageY) => {
+                const editorRect = this.editor.getBoundingClientRect();
+                let newLeft = pageX - editorRect.left - shiftX;
+                let newTop = pageY - editorRect.top - shiftY;
 
-                    wrapper.style.left = newLeft + "px";
-                    wrapper.style.top = newTop + "px";
-                };
+                newLeft = Math.max(0, Math.min(newLeft, editorRect.width - wrapper.offsetWidth));
+                newTop = Math.max(0, Math.min(newTop, editorRect.height - wrapper.offsetHeight));
 
-                const onMouseMove = e2 => moveAt(e2.pageX, e2.pageY);
-
-                document.addEventListener("mousemove", onMouseMove);
-                document.addEventListener("mouseup", () => {
-                    document.removeEventListener("mousemove", onMouseMove);
-                }, { once: true });
+                wrapper.style.left = newLeft + "px";
+                wrapper.style.top = newTop + "px";
             };
 
-            wrapper.ondragstart = () => false;
+            const onMouseMove = e2 => moveAt(e2.pageX, e2.pageY);
 
-            ["nw", "ne", "sw", "se"].forEach(corner => {
-                const handle = document.createElement("div");
-                handle.className = "resize-handle";
-                handle.style.width = "10px";
-                handle.style.height = "10px";
-                handle.style.background = "blue";
-                handle.style.position = "absolute";
-                handle.style.cursor = corner + "-resize";
+            document.addEventListener("mousemove", onMouseMove);
+            document.addEventListener("mouseup", () => {
+                document.removeEventListener("mousemove", onMouseMove);
+            }, { once: true });
 
-                if (corner === "nw") { handle.style.left = "0"; handle.style.top = "0"; }
-                if (corner === "ne") { handle.style.right = "0"; handle.style.top = "0"; }
-                if (corner === "sw") { handle.style.left = "0"; handle.style.bottom = "0"; }
-                if (corner === "se") { handle.style.right = "0"; handle.style.bottom = "0"; }
+            const onClickOutside = e => {
+                if (this.cropping && e.target !== img && e.target.id !== "crop-selection") {
+                    if (editor.contains(selectionBox)) editor.removeChild(selectionBox);
+                    this.cropping = false;
+                    document.removeEventListener("click", onClickOutside);
+                }
+            };
+            document.addEventListener("click", onClickOutside);
 
-                wrapper.appendChild(handle);
+        };
 
-                handle.addEventListener("mousedown", e => {
-                    e.stopPropagation();
-                    const startX = e.clientX;
-                    const startY = e.clientY;
-                    const startW = img.offsetWidth;
-                    const startH = img.offsetHeight;
+        wrapper.ondragstart = () => false;
 
-                    const onMouseMove = e2 => {
-                        let newW = startW + (e2.clientX - startX) * (corner.includes("e") ? 1 : -1);
-                        let newH = startH + (e2.clientY - startY) * (corner.includes("s") ? 1 : -1);
-                        if (newW > 10 && newH > 10) {
-                            img.style.width = newW + "px";
-                            img.style.height = newH + "px";
-                        }
-                    };
-                    const onMouseUp = () => {
-                        document.removeEventListener("mousemove", onMouseMove);
-                        document.removeEventListener("mouseup", onMouseUp);
-                    };
-                    document.addEventListener("mousemove", onMouseMove);
-                    document.addEventListener("mouseup", onMouseUp);
-                });
+        ["nw", "ne", "sw", "se"].forEach(corner => {
+            const handle = document.createElement("div");
+            handle.className = "resize-handle";
+            handle.style.width = "10px";
+            handle.style.height = "10px";
+            handle.style.background = "blue";
+            handle.style.position = "absolute";
+            handle.style.cursor = corner + "-resize";
+
+            if (corner === "nw") { handle.style.left = "0"; handle.style.top = "0"; }
+            if (corner === "ne") { handle.style.right = "0"; handle.style.top = "0"; }
+            if (corner === "sw") { handle.style.left = "0"; handle.style.bottom = "0"; }
+            if (corner === "se") { handle.style.right = "0"; handle.style.bottom = "0"; }
+
+            wrapper.appendChild(handle);
+
+            handle.addEventListener("mousedown", e => {
+                e.stopPropagation();
+                const startX = e.clientX;
+                const startY = e.clientY;
+                const startW = el.offsetWidth;
+                const startH = el.offsetHeight;
+
+                const onMouseMove = e2 => {
+                    let newW = startW + (e2.clientX - startX) * (corner.includes("e") ? 1 : -1);
+                    let newH = startH + (e2.clientY - startY) * (corner.includes("s") ? 1 : -1);
+                    if (newW > 30 && newH > 30) {
+                        el.style.width = newW + "px";
+                        el.style.height = newH + "px";
+                    }
+                };
+                table.style.width = newW + "px";
+                table.style.height = newH + "px";
+                image.style.width = newW + "px";
+                image.style.height = newH + "px";
+
+
+                const onMouseUp = () => {
+                    document.removeEventListener("mousemove", onMouseMove);
+                    document.removeEventListener("mouseup", onMouseUp);
+                };
+                document.addEventListener("mousemove", onMouseMove);
+                document.addEventListener("mouseup", onMouseUp);
             });
-        }
+        });
     }
-    cropImage() {
-        if (!this.lastClickedImage) {
-            alert("Click an image first, then crop.");
-            return;
-        }
-        const img = this.lastClickedImage;
-        const maxW = img.naturalWidth;
-        const maxH = img.naturalHeight;
-
-        const cropLeft = parseInt(prompt(`Crop from left (0-${maxW - 10}):`, 0), 10) || 0;
-        const cropRight = parseInt(prompt(`Crop from right (0-${maxW - cropLeft - 10}):`, 0), 10) || 0;
-        const cropTop = parseInt(prompt(`Crop from top (0-${maxH - 10}):`, 0), 10) || 0;
-        const cropBottom = parseInt(prompt(`Crop from bottom (0-${maxH - cropTop - 10}):`, 0), 10) || 0;
-
-        const newW = maxW - cropLeft - cropRight;
-        const newH = maxH - cropTop - cropBottom;
-
-        if (newW < 10 || newH < 10) {
-            alert("Invalid crop size, image too small after cropping.");
-            return;
-        }
-
-        const canvas = document.createElement("canvas");
-        canvas.width = newW;
-        canvas.height = newH;
-        const ctx = canvas.getContext("2d");
-
-        ctx.drawImage(
-            img,
-            cropLeft, cropTop, newW, newH,
-            0, 0, newW, newH                
-        );
-
-        img.src = canvas.toDataURL();
-        img.style.width = newW + "px";
-        img.style.height = newH + "px";
-    }
-
 }
 
 //Viewer
@@ -347,7 +322,18 @@ class Exporter {
     }
     exportWord() {
         const { title, author } = this.getMetaData();
-        const content = `<h1>${title}</h1><p>${author}</p>` + this.editor.innerHTML;
+        const content = `
+  <h1>${title}</h1><p>${author}</p>
+  <style>
+    table { border-collapse: collapse; }
+    td, th { border: 1px solid #000; padding: 5px; }
+    table, td, th { table-layout: fixed; }
+    img, table { max-width: 100%; }
+  </style>
+  ${this.editor.innerHTML}
+`;
+
+
         const blob = new Blob([content], { type: "application/msword" });
         const a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
@@ -357,7 +343,18 @@ class Exporter {
     exportPDF() {
         const { title, author } = this.getMetaData();
         const wrapper = document.createElement("div");
-        wrapper.innerHTML = `<h1>${title}</h1><p><b>Author:</b> ${author}</p>${this.editor.innerHTML}`;
+        wrapper.innerHTML = `
+  <h1>${title}</h1><p><b>Author:</b> ${author}</p>
+  <style>
+    table { border-collapse: collapse; }
+    td, th { border: 1px solid #000; padding: 5px; }
+    table, td, th { table-layout: fixed; }
+    img, table { max-width: 100%; }
+  </style>
+  ${this.editor.innerHTML}
+`;
+
+
         const opt = {
             margin: 10, filename: title + ".pdf",
             image: { type: 'jpeg', quality: 0.98 },
@@ -687,5 +684,5 @@ document.addEventListener('DOMContentLoaded', () => {
             tools.style.display = node ? "inline-flex" : "none";
         }
     });
-    window.imageHandler = new ImageHandler("editor");
+    window.objectHandler = new ObjectHandler("editor");
 });
