@@ -73,7 +73,68 @@ class Inserter {
         }
         html += "</table>";
         document.execCommand("insertHTML", false, html);
+
     }
+    // Add row below the current cell
+    addRow() {
+        const cell = this.getSelectedCell();
+        if (!cell) return;
+        const row = cell.parentNode;
+        const newRow = row.cloneNode(true);
+        newRow.querySelectorAll("td").forEach(td => td.textContent = "");
+        row.parentNode.insertBefore(newRow, row.nextSibling);
+    }
+
+    // Add column to the right of current cell
+    addColumn() {
+        const cell = this.getSelectedCell();
+        if (!cell) return;
+        const colIndex = Array.from(cell.parentNode.children).indexOf(cell);
+        const table = cell.closest("table");
+        Array.from(table.rows).forEach(row => {
+            const newCell = row.insertCell(colIndex + 1);
+            newCell.textContent = "";
+        });
+    }
+
+    // Remove the current row
+    removeRow() {
+        const cell = this.getSelectedCell();
+        if (!cell) return;
+        const row = cell.parentNode;
+        row.parentNode.removeChild(row);
+    }
+
+    // Remove the current column
+    removeColumn() {
+        const cell = this.getSelectedCell();
+        if (!cell) return;
+        const colIndex = Array.from(cell.parentNode.children).indexOf(cell);
+        const table = cell.closest("table");
+        Array.from(table.rows).forEach(row => {
+            if (row.cells[colIndex]) row.deleteCell(colIndex);
+        });
+    }
+
+    // Remove the entire table
+    removeTable() {
+        const cell = this.getSelectedCell();
+        if (!cell) return;
+        const table = cell.closest("table");
+        table.parentNode.removeChild(table);
+    }
+
+    // Helper: get selected table cell
+    getSelectedCell() {
+        const sel = window.getSelection();
+        if (!sel.rangeCount) return null;
+        let node = sel.anchorNode;
+        while (node && node.nodeName !== "TD") {
+            node = node.parentNode;
+        }
+        return node;
+    }
+
 }
 
 //Viewer
@@ -433,4 +494,19 @@ document.addEventListener('DOMContentLoaded', () => {
             setMode(isDark ? "light" : "dark");
         });
     }
+    document.addEventListener("selectionchange", () => {
+        const sel = window.getSelection();
+        if (!sel.rangeCount) return;
+
+        let node = sel.anchorNode;
+        while (node && node.nodeName !== "TABLE" && node.nodeName !== "TD") {
+            node = node.parentNode;
+        }
+
+        const tools = document.getElementById("table-tools");
+        if (tools) {
+            tools.style.display = node ? "inline-flex" : "none";
+        }
+    });
+
 });

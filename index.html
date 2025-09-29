@@ -71,6 +71,15 @@
         <button onclick="inserter.insertImage()">Insert Image (File)</button>
         <button onclick="inserter.insertImageURL()">Insert Image (URL)</button>
         <button onclick="inserter.insertTable()">Insert Table</button>
+        <div id="table-tools" class="table-controls" style="display:none;">
+            <button title="Add Row" onclick="inserter.addRow()">➕↔</button>
+            <button title="Add Col" onclick="inserter.addColumn()">➕↕</button>
+            <button title="Del Row" onclick="inserter.removeRow()">❌↔</button>
+            <button title="Del Col" onclick="inserter.removeColumn()">❌↕</button>
+            <button title="Del Table" onclick="inserter.removeTable()">🗑️</button>
+        </div>
+
+
     </div>
 
     <!-- Document Ops Toolbar -->

@@ -104,7 +104,6 @@ button {
 
 button.active-format {
     background-color: #007BFF;
-    /* Bootstrap blue */
     color: white;
     border: 1px solid #0056b3;
 }
@@ -152,4 +151,24 @@ button.active-format {
     background-color: #007BFF;
     color: #fff;
     border: 1px solid #0056b3;
+}
+
+.table-controls {
+    display: inline-flex;
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-left: 8px;
+}
+
+.table-controls button {
+    border: none;
+    border-right: 1px solid var(--panel-border);
+    padding: 6px 8px;
+    background: var(--tab-bg);
+    cursor: pointer;
+}
+
+.table-controls button:last-child {
+    border-right: none;
 }
