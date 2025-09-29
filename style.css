@@ -27,6 +27,11 @@ body {
     display: flex;
     gap: 10px;
     margin-bottom: 8px;
+    position: sticky;
+    top: 0;
+    z-index: 1100;
+    background: var(--panel);
+    padding: 6px;
 }
 
 .tab-btn,
@@ -50,6 +55,9 @@ body {
     border: 1px solid var(--panel-border);
     border-radius: 6px;
     flex-wrap: wrap;
+    position: sticky;
+    top: 48px;
+    z-index: 1000;
 }
 
 .page {
@@ -64,6 +72,7 @@ body {
     background: var(--editor-bg);
     border: 1px solid #ccc;
     padding: 40px;
+    padding-top: 60px;
     box-shadow: 0 0 8px var(--shadow);
     outline: none;
     color: var(--editor-text);
