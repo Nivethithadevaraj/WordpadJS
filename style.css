@@ -215,27 +215,30 @@ button.active-format {
 }
 
 .page {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
 }
 
 .editor-page {
-    width: 794px;
-    min-height: 1123px;
-    margin: 40px auto;
-    padding: 0;
-    box-sizing: border-box;
-    border: 1px solid #ccc;
-    background: white;
-}
-
-.editor-page>div {
-    margin: 40px;
+  width: 794px;        /* A4 width at 96dpi */
+  min-height: 1123px;  /* A4 height */
+  margin: 40px auto;   /* outer margin on screen */
+  padding: 40px;       /* content padding */
+  background: var(--editor-bg);
+  border: 1px solid #ccc;
+  box-shadow: 0 0 8px var(--shadow);
+  outline: none;
+  color: var(--editor-text);
+  transition: background 0.25s, color 0.25s;
 }
 
 .editor-page.exporting {
-    margin-top: 0 !important;
-    padding-top: 0 !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+  border: none !important;
+  padding: 0 !important;
 }
+
+
