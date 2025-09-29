@@ -9,13 +9,13 @@ class Editor {
         document.execCommand(command, false, value);
         this.editor.focus();
         this.updateActiveStates();
-        if (window.historyManager) historyManager.save();   // track formatting & commands
+        if (window.historyManager) historyManager.save();
     }
     formatBlock(tag) {
         document.execCommand("formatBlock", false, tag);
         this.editor.focus();
         this.updateActiveStates();
-        if (window.historyManager) historyManager.save();   // track headings etc.
+        if (window.historyManager) historyManager.save();
     }
     updateActiveStates() {
         const states = {
@@ -48,45 +48,36 @@ class Editor {
     }
 }
 
-// History Manager (MutationObserver + debounced saves + undo/redo that restores HTML)
 class HistoryManager {
     constructor(editorId, options = {}) {
         this.editor = document.getElementById(editorId);
         this.stack = [];
         this.index = -1;
-        this.max = options.max || 200;           // keep last N states
+        this.max = options.max || 200;
         this.debounceMs = options.debounceMs || 150;
         this._debounceTimer = null;
         this._isRestoring = false;
 
-        // MutationObserver to catch changes (insertImage via DOM append, img.src changes, attributes, moves)
         this.observeConfig = { childList: true, subtree: true, attributes: true, characterData: true };
         this.observer = new MutationObserver((mutations) => this._onMutations(mutations));
         this.observer.observe(this.editor, this.observeConfig);
 
-        // Also listen to input for typing
         this.editor.addEventListener("input", () => this.save());
-
-        // initial snapshot
         this.save();
     }
 
     _onMutations(mutations) {
-        // ignore if we are restoring (undo/redo)
         if (this._isRestoring) return;
         if (this._debounceTimer) clearTimeout(this._debounceTimer);
         this._debounceTimer = setTimeout(() => this.save(), this.debounceMs);
     }
 
     save() {
-        if (this._isRestoring) return; // don't save while restoring
+        if (this._isRestoring) return;
         const content = this.editor.innerHTML;
-        // avoid duplicate consecutive states
         if (this.index >= 0 && this.stack[this.index] === content) return;
-        // cut future if we've undone some steps
         this.stack = this.stack.slice(0, this.index + 1);
         this.stack.push(content);
-        // limit size
         if (this.stack.length > this.max) {
             const excess = this.stack.length - this.max;
             this.stack.splice(0, excess);
@@ -96,29 +87,23 @@ class HistoryManager {
 
     undo() {
         if (this.index <= 0) {
-            // nothing to undo
             return;
         }
-        // prevent observer from capturing our innerHTML set
         this._isRestoring = true;
         this.observer.disconnect();
-
-        // clear any active wrappers so we restore clean DOM (ObjectHandler will recreate wrappers on click)
         if (window.objectHandler && typeof objectHandler.clearWrapper === 'function') {
-            try { objectHandler.clearWrapper(); } catch (e) { /* ignore */ }
+            try { objectHandler.clearWrapper(); } catch (e) { }
         }
 
         this.index--;
         this.editor.innerHTML = this.stack[this.index];
 
-        // reconnect observer and finish
         this.observer.observe(this.editor, this.observeConfig);
         this._isRestoring = false;
 
-        // refresh UI states and focus
         if (window.editor) {
-            try { editor.updateActiveStates(); } catch (e) { /* ignore */ }
-            try { editor.editor.focus(); } catch (e) { /* ignore */ }
+            try { editor.updateActiveStates(); } catch (e) { }
+            try { editor.editor.focus(); } catch (e) { }
         }
     }
 
@@ -128,7 +113,7 @@ class HistoryManager {
         this.observer.disconnect();
 
         if (window.objectHandler && typeof objectHandler.clearWrapper === 'function') {
-            try { objectHandler.clearWrapper(); } catch (e) { /* ignore */ }
+            try { objectHandler.clearWrapper(); } catch (e) { }
         }
 
         this.index++;
@@ -138,35 +123,60 @@ class HistoryManager {
         this._isRestoring = false;
 
         if (window.editor) {
-            try { editor.updateActiveStates(); } catch (e) { /* ignore */ }
-            try { editor.editor.focus(); } catch (e) { /* ignore */ }
+            try { editor.updateActiveStates(); } catch (e) { }
+            try { editor.editor.focus(); } catch (e) { }
         }
     }
 }
-
-//Inserter
+// Inserter
 class Inserter {
     constructor(editorId) { this.editor = document.getElementById(editorId); }
 
-    insertLink() {
-        const url = document.getElementById("linkUrl")?.value.trim();
-        if (url) {
-            document.execCommand("createLink", false, url);
-            if (window.historyManager) historyManager.save();
+    showInsertStatus(msg, isError = false) {
+        let status = document.getElementById("insertStatus");
+        if (!status) {
+            status = document.createElement("span");
+            status.id = "insertStatus";
+            status.style.marginLeft = "12px";
+            status.style.fontWeight = "bold";
+            document.getElementById("insert").appendChild(status);
         }
+        status.textContent = msg;
+        status.style.color = isError ? "red" : "green";
+        setTimeout(() => { status.textContent = ""; }, 3000);
+    }
+
+    insertLink() {
+        const input = document.getElementById("linkUrl");
+        const url = input?.value.trim();
+        if (!url) {
+            this.showInsertStatus("⚠️ Enter a link URL", true);
+            return;
+        }
+        document.execCommand("createLink", false, url);
+        historyManager.save();
+        input.value = "";
+        input.blur();
+        this.editor.focus();
+        this.showInsertStatus("✅ Link inserted");
     }
 
     insertImage() {
-        const input = document.createElement("input"); input.type = "file"; input.accept = "image/*";
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = "image/*";
         input.onchange = e => {
-            const file = e.target.files[0]; if (!file) return;
+            const file = e.target.files[0];
+            if (!file) return;
             const r = new FileReader();
             r.onload = ev => {
                 const img = document.createElement("img");
                 img.src = ev.target.result;
                 img.style.maxWidth = "100%";
-                document.getElementById("editor").appendChild(img);
-                if (window.historyManager) historyManager.save();
+                this.editor.appendChild(img);
+                historyManager.save();
+                this.editor.focus();
+                this.showInsertStatus("✅ Image inserted");
             };
             r.readAsDataURL(file);
         };
@@ -174,19 +184,47 @@ class Inserter {
     }
 
     insertImageURL() {
-        const url = document.getElementById("imgUrl")?.value.trim();
-        if (!url) return;
+        const input = document.getElementById("imgUrl");
+        const url = input?.value.trim();
+        if (!url) {
+            this.showInsertStatus("⚠️ Enter an image URL", true);
+            return;
+        }
+
         const img = document.createElement("img");
-        img.src = url;
         img.style.maxWidth = "100%";
-        document.getElementById("editor").appendChild(img);
-        if (window.historyManager) historyManager.save();
+
+        fetch(url)
+            .then(res => res.blob())
+            .then(blob => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    img.src = reader.result; // embed as base64
+                    this.editor.appendChild(img);
+                    historyManager.save();
+                    this.editor.focus();
+                    this.showInsertStatus("✅ Image inserted");
+                };
+                reader.readAsDataURL(blob);
+            })
+            .catch(() => {
+                this.showInsertStatus("⚠️ Could not load image", true);
+            });
+
+        input.value = "";
+        input.blur();
     }
 
     insertTable() {
-        const rows = parseInt(document.getElementById("tableRows")?.value, 10);
-        const cols = parseInt(document.getElementById("tableCols")?.value, 10);
-        if (!rows || !cols) return;
+        const rowInput = document.getElementById("tableRows");
+        const colInput = document.getElementById("tableCols");
+        const rows = parseInt(rowInput?.value, 10);
+        const cols = parseInt(colInput?.value, 10);
+        this.editor.focus();
+        if (!rows || !cols) {
+            this.showInsertStatus("⚠️ Enter valid rows & cols", true);
+            return;
+        }
 
         let html = "<table>";
         for (let r = 0; r < rows; r++) {
@@ -196,7 +234,14 @@ class Inserter {
         }
         html += "</table>";
         document.execCommand("insertHTML", false, html);
-        if (window.historyManager) historyManager.save();
+
+        historyManager.save();
+        rowInput.value = "";
+        colInput.value = "";
+        rowInput.blur();
+        colInput.blur();
+
+        this.showInsertStatus("✅ Table inserted");
     }
 
     addRow() {
@@ -394,7 +439,7 @@ class Viewer {
         if (window.historyManager) historyManager.save();
     }
     resetContent() {
-        this.editor.innerHTML = ""; 
+        this.editor.innerHTML = "";
         if (window.historyManager) historyManager.save();
     }
     copyPlain() {
@@ -432,14 +477,38 @@ class Viewer {
 // Exporter 
 class Exporter {
     constructor(editorId) { this.editor = document.getElementById(editorId); }
+
     getMetaData() {
-        let title = document.getElementById("docTitle").value.trim() || "Untitled";
-        let author = document.getElementById("docAuthor").value.trim() || "Unknown";
+        let title = document.getElementById("docTitle").value.trim();
+        let author = document.getElementById("docAuthor").value.trim();
+        const status = document.getElementById("exportStatus");
+
+        if (!title || !author) {
+            if (status) {
+                status.textContent = "⚠️ Please enter Title and Author before exporting.";
+                status.style.color = "red";
+            }
+            throw new Error("Missing metadata");
+        }
+
+        if (status) {
+            status.textContent = "";
+        }
+
         return { title, author };
     }
+
+    clearMetaInputs() {
+        const t = document.getElementById("docTitle");
+        const a = document.getElementById("docAuthor");
+        if (t) t.value = "";
+        if (a) a.value = "";
+    }
+
     exportWord() {
-        const { title, author } = this.getMetaData();
-        const content = `
+        try {
+            const { title, author } = this.getMetaData();
+            const content = `
   <h1>${title}</h1><p>${author}</p>
   <style>
     table { border-collapse: collapse; }
@@ -449,16 +518,22 @@ class Exporter {
   </style>
   ${this.editor.innerHTML}
 `;
-        const blob = new Blob([content], { type: "application/msword" });
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = title + ".doc";
-        a.click();
+            const blob = new Blob([content], { type: "application/msword" });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = title + ".doc";
+            a.click();
+
+            this.clearMetaInputs();
+        } catch (e) {
+        }
     }
+
     exportPDF() {
-        const { title, author } = this.getMetaData();
-        const wrapper = document.createElement("div");
-        wrapper.innerHTML = `
+        try {
+            const { title, author } = this.getMetaData();
+            const wrapper = document.createElement("div");
+            wrapper.innerHTML = `
   <h1>${title}</h1><p><b>Author:</b> ${author}</p>
   <style>
     table { border-collapse: collapse; }
@@ -468,15 +543,25 @@ class Exporter {
   </style>
   ${this.editor.innerHTML}
 `;
-        const opt = {
-            margin: 10, filename: title + ".pdf",
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2 },
-            jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' }
-        };
-        html2pdf().set(opt).from(wrapper).toPdf().get('pdf').then(pdf => {
-            pdf.setProperties({ title, subject: "WordPad Export", author, keywords: "WordPad, Export, PDF", creator: "Custom WordPad Clone" });
-        }).save();
+            const opt = {
+                margin: 10, filename: title + ".pdf",
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' }
+            };
+            html2pdf().set(opt).from(wrapper).toPdf().get('pdf').then(pdf => {
+                pdf.setProperties({
+                    title,
+                    subject: "WordPad Export",
+                    author,
+                    keywords: "WordPad, Export, PDF",
+                    creator: "Custom WordPad Clone"
+                });
+            }).save();
+
+            this.clearMetaInputs();
+        } catch (e) {
+        }
     }
 }
 
